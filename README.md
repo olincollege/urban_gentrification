@@ -9,3 +9,6 @@ I would like to make effective visualizations that tell a succinct story without
 
 ## Grant
 My goal for this project is to learn how to better find, scrape, and clean data. I also want to develop my storytelling skills through the visualizations I produce and weave them into effectively argued text.
+
+## Merwan
+Through this project, I would like to practice my skills with data cleaning and preparation as well as my ability to create useful and readable visualizations.
