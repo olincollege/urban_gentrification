@@ -6,3 +6,6 @@ I would like to gain more experience in data preprocessing in this project. This
 
 ## Antoinette
 I would like to make effective visualizations that tell a succinct story without being too complicated. 
+
+## Grant
+My goal for this project is to learn how to better find, scrape, and clean data. I also want to develop my storytelling skills through the visualizations I produce and weave them into effectively argued text.
