@@ -12,3 +12,6 @@ My goal for this project is to learn how to better find, scrape, and clean data.
 
 ## Merwan
 Through this project, I would like to practice my skills with data cleaning and preparation as well as my ability to create useful and readable visualizations.
+
+## Madie 
+My goal for this project is to gain experience with cleaning/wrangling data, as well as use visualizations to convey interesting stories with data. Particularly, I would like to work more with map data or spatial visualization. 
