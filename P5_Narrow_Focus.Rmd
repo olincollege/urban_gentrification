@@ -170,8 +170,10 @@ Over the last ten years, the PM10 concentration in the air of New York, New Jers
 Madie:
 ```{r}
 library(stringr)
-cityairMessy <- read_excel(here("data","cali_air_county_2022.csv"))
-!!!
+library(readr)
+
+cityairMessy <- read_csv(here("data","cali_air_county_2022.csv"))
+
 cityairMessy2 <- data.frame( # cutting first few rows that have weird names
   state = cityairMessy[3:nrow(cityairMessy),1], # cutting off first two rows of col, which doesnt contain the correct data values
   county = cityairMessy[3:nrow(cityairMessy),2],
