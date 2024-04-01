@@ -1,0 +1,22 @@
+Category,Status,PercentageChange
+All,Gentrifying,15.1
+All,Poor_NG,11.23
+All,Rich,1.57
+Bar,Gentrifying,12.7
+Bar,Poor_NG,-5.32
+Bar,Rich,6.48
+Convenience,Gentrifying,43.65
+Convenience,Poor_NG,10.26
+Convenience,Rich,16.3
+Fast Food,Gentrifying,14.08
+Fast Food,Poor_NG,14.58
+Fast Food,Rich,7.18
+Grocery,Gentrifying,0.32
+Grocery,Poor_NG,-0.39
+Grocery,Rich,-16.2
+Hair,Gentrifying,19.93
+Hair,Poor_NG,20.66
+Hair,Rich,5.13
+Restaurant,Gentrifying,34.09
+Restaurant,Poor_NG,26.3
+Restaurant,Rich,16.44
