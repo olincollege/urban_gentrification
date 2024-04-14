@@ -1,0 +1,48 @@
+---
+title: "VisualizationBrainstorm"
+author: "Cara Mulrooney"
+date: "2024-04-14"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+remotes::install_github("mfherman/nycgeo")
+library(dplyr)
+library(readxl)
+library(nycgeo)
+library(sf)
+library(tidyverse)
+```
+
+Cara:
+```{r}
+geoid_gent <- read_excel(here("data", "udp_ny_final_typology_jan_2019.xlsx"))
+
+nyc_boundaries(geography = "tract")
+
+bk_qn_tracts <- nyc_boundaries(
+  geography = "tract",
+  filter_by = "borough",
+  region = c("brooklyn")
+  )
+
+bk_qn_tracts1 <- transform(bk_qn_tracts,
+							geoid = as.numeric(geoid))
+```
+
+```{r fig.width=10}
+result <- left_join(bk_qn_tracts1, geoid_gent, by = "geoid")
+
+result <- result %>%
+  mutate(gent_level = str_extract(Type_1.19, "(?<=-).*"))
+
+ggplot(result) +
+geom_sf(aes(fill = gent_level)) +
+theme_void() +
+theme(panel.grid = element_line(color = "transparent")) +
+labs(title = "Which neighborhoods have a high risk of gentrification?", fill="Gentrification Level")
+```
