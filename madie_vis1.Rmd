@@ -1,0 +1,263 @@
+---
+title: "project_vis"
+author: "Madie Tong"
+date: "2024-04-15"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(tidycensus)
+library(dplyr)
+library(tmap)
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Prev Stuff 
+
+```{r, echo=FALSE}
+# kings_2010 <- read_csv("uscensus_kingscounty_income/kingscounty_income_2010.csv")
+# kings_2013 <- read_csv("uscensus_kingscounty_income/kingscounty_income_2013.csv")
+# kings_2016 <- read_csv("uscensus_kingscounty_income/kingscounty_income_2016.csv")
+# kings_2019 <- read_csv("uscensus_kingscounty_income/kingscounty_income_2019.csv")
+# kings_2021 <- read_csv("uscensus_kingscounty_income/kingscounty_income_2021.csv")
+```
+
+## Census Data for median income and race percentages in Kings County by Year
+```{r, echo=FALSE}
+# 2022
+income_race_2022 <- tidycensus::get_acs(state = "NY",
+                                county = "Kings",
+                                geography="tract",
+                                variables = c("B19013_001", "B01003_001E", "B02001_002E", "B02001_003E", "B02001_004E", "B02001_005E"), # median, total pop, white,afr,native, asian
+                                year=2022,
+                                geometry=TRUE) %>%
+ select(-moe) %>%
+  pivot_wider(names_from=variable, values_from=estimate) %>%
+  mutate(percent_white_alone=100*`B02001_002`/`B01003_001`, 
+         percent_african_american_alone=100*`B02001_003`/`B01003_001`,
+         percent_native_alone = 100*`B02001_004`/`B01003_001`,
+         percent_asian_alone = 100*`B02001_005`/`B01003_001`)%>%
+  rename(median_household_income=`B19013_001`) %>%
+  select(-c(`B02001_002`, `B02001_003`, `B02001_004`, `B02001_005`, `B01003_001`)) %>%
+  filter(!is.na(median_household_income)) %>%
+  mutate(state_code=str_sub(GEOID,1,2), county_code=str_sub(GEOID,3,5)) %>%
+  left_join(select(fips_codes, c(state_code, county_code, county))) %>%
+  mutate(county = str_remove(county, " County"))
+
+# 2016
+income_race_2016 <- tidycensus::get_acs(state = "NY",
+                                county = "Kings",
+                                geography="tract",
+                                variables = c("B19013_001", "B01003_001E", "B02001_002E", "B02001_003E", "B02001_004E", "B02001_005E"), # median, total pop, white,afr,native, asian
+                                year=2016,
+                                geometry=TRUE) %>%
+ select(-moe) %>%
+  pivot_wider(names_from=variable, values_from=estimate) %>%
+  mutate(percent_white_alone=100*`B02001_002`/`B01003_001`, 
+         percent_african_american_alone=100*`B02001_003`/`B01003_001`,
+         percent_native_alone = 100*`B02001_004`/`B01003_001`,
+         percent_asian_alone = 100*`B02001_005`/`B01003_001`)%>%
+  rename(median_household_income=`B19013_001`) %>%
+  select(-c(`B02001_002`, `B02001_003`, `B02001_004`, `B02001_005`, `B01003_001`)) %>%
+  filter(!is.na(median_household_income)) %>%
+  mutate(state_code=str_sub(GEOID,1,2), county_code=str_sub(GEOID,3,5)) %>%
+  left_join(select(fips_codes, c(state_code, county_code, county))) %>%
+  mutate(county = str_remove(county, " County"))
+
+# 2010
+income_race_2010 <- tidycensus::get_acs(state = "NY",
+                                county = "Kings",
+                                geography="tract",
+                                variables = c("B19013_001", "B01003_001E", "B02001_002E", "B02001_003E", "B02001_004E", "B02001_005E"), # median, total pop, white,afr,native, asian
+                                year=2010,
+                                geometry=TRUE) %>%
+ select(-moe) %>%
+  pivot_wider(names_from=variable, values_from=estimate) %>%
+  mutate(percent_white_alone=100*`B02001_002`/`B01003_001`, 
+         percent_african_american_alone=100*`B02001_003`/`B01003_001`,
+         percent_native_alone = 100*`B02001_004`/`B01003_001`,
+         percent_asian_alone = 100*`B02001_005`/`B01003_001`)%>%
+  rename(median_household_income=`B19013_001`) %>%
+  select(-c(`B02001_002`, `B02001_003`, `B02001_004`, `B02001_005`, `B01003_001`)) %>%
+  filter(!is.na(median_household_income)) %>%
+  mutate(state_code=str_sub(GEOID,1,2), county_code=str_sub(GEOID,3,5)) %>%
+  left_join(select(fips_codes, c(state_code, county_code, county))) %>%
+  mutate(county = str_remove(county, " County"))
+```
+
+## Creating Figures for each Year 
+```{r, echo=FALSE}
+fig1_2022 <- tm_shape(income_race_2022) + 
+  tm_polygons(col = "median_household_income",
+              n = 10,
+              border.alpha=.3,
+              palette = "-Blues",
+              title = "2022 US Census") + 
+  tm_layout(title = "Median Household Income \nby Census Tract",
+            frame = FALSE,
+            legend.outside = TRUE)
+
+fig2_2022 <- tm_shape(income_race_2022) + 
+  tm_polygons(col = "percent_african_american_alone",
+          style = "jenks",
+          n = 10,
+          border.alpha=.3,
+          palette = "-Purples",
+          title = "2022 US Census") + 
+  tm_layout(title = "Percent African American Alone \nby Census Tract",
+            frame = FALSE,
+            legend.outside = TRUE)
+
+fig3_2022 <- tm_shape(income_race_2022) + 
+  tm_polygons(col = "percent_white_alone",
+          style = "jenks",
+          n = 10,
+          border.alpha=.3,
+          palette = "-Purples",
+          title = "2022 US Census") + 
+  tm_layout(title = "Percent White Alone \nby Census Tract",
+            frame = FALSE,
+            legend.outside = TRUE)
+
+fig4_2022 <- tm_shape(income_race_2022) + 
+  tm_polygons(col = "percent_native_alone",
+          style = "jenks",
+          n = 10,
+          border.alpha=.3,
+          palette = "-Purples",
+          title = "2022 US Census") + 
+  tm_layout(title = "Percent Native/Alaskan Native Alone \nby Census Tract",
+            frame = FALSE,
+            legend.outside = TRUE)
+
+fig5_2022 <- tm_shape(income_race_2022) + 
+  tm_polygons(col = "percent_asian_alone",
+          style = "jenks",
+          n = 10,
+          border.alpha=.3,
+          palette = "-Purples",
+          title = "2022 US Census") + 
+  tm_layout(title = "Percent Asian Alone \nby Census Tract",
+            frame = FALSE,
+            legend.outside = TRUE)
+```
+
+
+```{r,echo=FALSE}
+fig1_2016 <- tm_shape(income_race_2016) + 
+  tm_polygons(col = "median_household_income",
+              n = 10,
+              border.alpha=.3,
+              palette = "-Blues",
+              title = "2016 US Census") + 
+  tm_layout(title = "Median Household Income \nby Census Tract",
+            frame = FALSE,
+            legend.outside = TRUE)
+
+fig2_2016 <- tm_shape(income_race_2016) + 
+  tm_polygons(col = "percent_african_american_alone",
+          style = "jenks",
+          n = 10,
+          border.alpha=.3,
+          palette = "-Purples",
+          title = "2016 US Census") + 
+  tm_layout(title = "Percent African American Alone \nby Census Tract",
+            frame = FALSE,
+            legend.outside = TRUE)
+
+fig3_2016 <- tm_shape(income_race_2016) + 
+  tm_polygons(col = "percent_white_alone",
+          style = "jenks",
+          n = 10,
+          border.alpha=.3,
+          palette = "-Purples",
+          title = "2016 US Census") + 
+  tm_layout(title = "Percent White Alone \nby Census Tract",
+            frame = FALSE,
+            legend.outside = TRUE)
+
+fig4_2016 <- tm_shape(income_race_2016) + 
+  tm_polygons(col = "percent_native_alone",
+          style = "jenks",
+          n = 10,
+          border.alpha=.3,
+          palette = "-Purples",
+          title = "2016 US Census") + 
+  tm_layout(title = "Percent Native/Alaskan Alone \nby Census Tract",
+            frame = FALSE,
+            legend.outside = TRUE)
+
+fig5_2016 <- tm_shape(income_race_2016) + 
+  tm_polygons(col = "percent_asian_alone",
+          style = "jenks",
+          n = 10,
+          border.alpha=.3,
+          palette = "-Purples",
+          title = "2016 US Census") + 
+  tm_layout(title = "Percent Asian Alone \nby Census Tract",
+            frame = FALSE,
+            legend.outside = TRUE)
+```
+
+```{r,echo=FALSE}
+fig1_2010 <- tm_shape(income_race_2010) + 
+  tm_polygons(col = "median_household_income",
+              n = 10,
+              border.alpha=.3,
+              palette = "-Blues",
+              title = "2010 US Census") + 
+  tm_layout(title = "Median Household Income \nby Census Tract",
+            frame = FALSE,
+            legend.outside = TRUE)
+
+fig2_2010 <- tm_shape(income_race_2010) + 
+  tm_polygons(col = "percent_african_american_alone",
+          style = "jenks",
+          n = 10,
+          border.alpha=.3,
+          palette = "-Purples",
+          title = "2010 US Census") + 
+  tm_layout(title = "Percent African American Alone \nby Census Tract",
+            frame = FALSE,
+            legend.outside = TRUE)
+
+fig3_2010 <- tm_shape(income_race_2010) + 
+  tm_polygons(col = "percent_white_alone",
+          style = "jenks",
+          n = 10,
+          border.alpha=.3,
+          palette = "-Purples",
+          title = "2010 US Census") + 
+  tm_layout(title = "Percent White Alone \nby Census Tract",
+            frame = FALSE,
+            legend.outside = TRUE)
+
+fig4_2010 <- tm_shape(income_race_2010) + 
+  tm_polygons(col = "percent_native_alone",
+          style = "jenks",
+          n = 10,
+          border.alpha=.3,
+          palette = "-Purples",
+          title = "2010 US Census") + 
+  tm_layout(title = "Percent Native/Alaskan Native Alone \nby Census Tract",
+            frame = FALSE,
+            legend.outside = TRUE)
+
+fig5_2010 <- tm_shape(income_race_2010) + 
+  tm_polygons(col = "percent_asian_alone",
+          style = "jenks",
+          n = 10,
+          border.alpha=.3,
+          palette = "-Purples",
+          title = "2010 US Census") + 
+  tm_layout(title = "Percent Asian Alone \nby Census Tract",
+            frame = FALSE,
+            legend.outside = TRUE)
+```
+
+```{r}
+tmap_arrange(fig1_2022,fig2_2022,fig3_2022,fig4_2022, fig5_2022,nrow=2)
+tmap_arrange(fig1_2016,fig2_2016,fig3_2016,fig4_2016, fig5_2016,nrow=2)
+tmap_arrange(fig1_2010,fig2_2010,fig3_2010,fig4_2010, fig5_2010,nrow=2)
+```
