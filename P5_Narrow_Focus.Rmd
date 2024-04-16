@@ -235,7 +235,6 @@ library(choroplethrMaps)
 
 county_choropleth(clean_air_data, state_zoom="massachusetts")+
  scale_fill_manual(values = rev(brewer.pal(8,"RdBu")))+ labs(fill=element_blank(),title="Mean AQI Value 2024 by Massachusetts County")
-!!!
 ```
 
 The air quality of Massachusetts in terms of AQI is pretty low on average with daily AQIs ranging from 14.1 to 26.3 on average. Regions of high AQI that stand out are western Massachusetts and the Boston area. 
@@ -251,8 +250,8 @@ How do changes in demographics of a county or neighborhood impact the retail geo
 
 Grant:
 ```{r}
-estab_change <- read_csv("Datasets/DeltaEstabCount_NYC1317.csv", show_col_types = FALSE)
-!!!
+estab_change <- read_csv("data/DeltaEstabCount_NYC1317.csv", show_col_types = FALSE)
+
 ggplot(estab_change, aes(x=Category, y=PercentageChange, fill=Status))+
   geom_bar(position="dodge", stat="identity")+
   labs(title="Retail Business Count by Area Classification (2013 vs 2017)", xlabel="Yelp Category", ylabel="Percentage (%)")+
