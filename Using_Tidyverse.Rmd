@@ -21,6 +21,9 @@ options(htmltools.dir.version = FALSE)
 ```{r}
 #Must sign up for a Census key here in order to access the data: https://api.census.gov/data/key_signup.html
 
+# good website for walkthrough: https://walker-data.com/tidycensus/articles/basic-usage.html#searching-for-variables
+
+
 #census_api_key("be06ef4e79a388a876e38a114656a8ca5d50a55b", install = TRUE, overwrite=TRUE) #insert api key
 
 variables <-load_variables(2017, "acs5", cache = TRUE)
