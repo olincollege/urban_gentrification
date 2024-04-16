@@ -16,6 +16,8 @@ library(readxl)
 library(nycgeo)
 library(sf)
 library(tidyverse)
+library(readr)
+library(gridExtra)
 ```
 
 Cara:
@@ -46,3 +48,86 @@ theme_void() +
 theme(panel.grid = element_line(color = "transparent")) +
 labs(title = "Which neighborhoods have a high risk of gentrification?", fill="Gentrification Level")
 ```
+
+```{r}
+pub_housing <- read_csv(here("data","public_housing_data.csv"))
+
+nyc_boundaries(geography = "cd")
+
+bk_qn_tracts2 <- nyc_boundaries(
+  geography = "cd",
+  filter_by = "borough",
+  region = c("brooklyn"),
+  )
+
+bk_qn_tracts2 <- dplyr::filter(bk_qn_tracts2, grepl("Brooklyn Community District",cd_name))
+
+pub_housing <- pub_housing %>%
+  filter(Level == "Community District") %>%
+  filter(grepl("BK",Geography)) %>%
+  mutate(cd_id = str_extract(Geography, "\\d+"),
+         cd_id = gsub("^0+(?!$)", "", cd_id, perl=TRUE))
+  
+result_housing <- left_join(bk_qn_tracts2, pub_housing, by = "cd_id")
+
+result_housing$public_housing <- as.numeric(sub("%", "", result_housing$public_housing))
+```
+
+```{r fig.width=10}
+
+ggplot(result_housing) +
+geom_sf(aes(fill = public_housing)) +
+theme_void() +
+theme(panel.grid = element_line(color = "transparent")) +
+labs(title = "Share of Rental Units Located in Public Housing in 2022", fill="Public Housing Rental Units (%)")
+```
+
+```{r}
+williamsburg <- read_excel(here("data","BK01_NeighborhoodDataProfile.xlsx", sheet = "BK 01 Data"))
+
+williamsburg1 <- williamsburg %>%
+  filter(`Indicator Category` == "Housing Market and Conditions") %>%
+  filter(grepl("Index of housing price appreciation",Indicator)) %>%
+  tidyr::pivot_longer(cols = c("2000","2006","2010","2019","2021","2022")) %>%
+  mutate(Indicator = str_extract(Indicator, "(?<=,).*")) %>%
+  transform(value = as.numeric(value))
+
+p<-ggplot(williamsburg1, aes(x=name, y=value, group=Indicator)) +
+  geom_line(aes(color=Indicator))+
+  geom_point(aes(color=Indicator))+
+  labs(x="Year", y="Percentage Change", title="Average Price Changes of Repeated Property Sales - Williamsburg", color = "Property Type")
+p
+
+#head(williamsburg1)
+```
+
+```{r}
+brooklyn <- read_excel(here("data","BK_NeighborhoodDataProfile.xlsx", sheet = "BK Data"))
+
+brooklyn1 <- brooklyn %>%
+  filter(`Indicator Category` == "Housing Market and Conditions") %>%
+  filter(grepl("Index of housing price appreciation",Indicator)) %>%
+  tidyr::pivot_longer(cols = c("2000","2006","2010","2019","2021","2022")) %>%
+  mutate(Indicator = str_extract(Indicator, "(?<=,).*")) %>%
+  transform(value = as.numeric(value))
+
+p1<-ggplot(brooklyn1, aes(x=name, y=value, group=Indicator)) +
+  geom_line(aes(color=Indicator))+
+  geom_point(aes(color=Indicator))+
+  labs(x="Year", y="Percentage Change", title="Average Price Changes of Repeated Property Sales - Brooklyn", color = "Property Type")
+p1
+```
+
+```{r}
+ggplot() + 
+  geom_line(data = williamsburg1, aes(x = name, y = value, group = Indicator, color = Indicator, linetype="Williamsburg")) +
+  geom_point(data = williamsburg1, aes(x = name, y = value, color = Indicator)) +
+  geom_line(data = brooklyn1, aes(x = name, y = value, group = Indicator, color = Indicator, linetype = "Brooklyn Overall")) +
+  geom_point(data = brooklyn1, aes(x = name, y = value, color = Indicator)) +
+  scale_linetype_manual(values = c("Williamsburg" = "solid", "Brooklyn Overall" = "dotted")) +
+  labs(x="Year", y="Percentage Change", linetype = "Area", title="Average Price Changes of Repeated Property Sales", color = "Property Type")
+
+```
+
+
+
