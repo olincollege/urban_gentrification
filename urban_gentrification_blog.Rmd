@@ -1,0 +1,34 @@
+---
+title: Urban Gentrification
+author: Madie Tong, Antoinette Tan, Cara Mulrooney, Grant Miner, Merwan Yeditha
+output:
+  rmdformats::downcute
+
+---
+
+# Urban Gentrification in Brooklyn, New York
+
+Brooklyn, once an emblem of cultural diversity and resilience, now stands at the forefront of urban transformation. From its humble beginnings as a haven for immigrants and working-class families to its current status as a hotspot for upscale living and commercial development, the borough's journey reflects the ebb and flow of societal shifts.
+
+Motivation for our exploration into Brooklyn's evolution stems from the profound changes witnessed over recent decades. The borough has undergone a marked demographic shift, with historically Black neighborhoods experiencing an influx of higher-income residents. This transformation, commonly termed gentrification, has reshaped the social and economic landscape, raising questions about its origins, impacts, and implications for retail geography.
+
+Our research delves into the nexus between demographic changes and retail dynamics, focusing on the interplay between shifting populations and commercial landscapes. Originally framed around the question of how demographic shifts influence retail geography, our inquiry has evolved to encompass broader inquiries into the root causes of gentrification.
+
+Central to our investigation is the recognition that gentrification is not a monolithic phenomenon but a multifaceted process deeply rooted in historical legacies, economic forces, and policy decisions. By examining the historical trajectory of Brooklyn, tracing the patterns of demographic change, and scrutinizing the policies and practices that shape urban development, we aim to unravel the complex web of factors driving gentrification and its ramifications for retail establishments.
+
+Thus, our research question emerges: What historical, economic, and policy factors have contributed to the gentrification of Brooklyn, and how have these changes impacted the retail geography of the borough, including the proliferation of high-end stores, malls, and the displacement of small businesses?
+
+Through this exploration, we seek not only to understand the past and present dynamics but also to inform future urban planning efforts, advocating for equitable development that preserves the diverse fabric of Brooklyn's communities while fostering vibrant and inclusive retail environments.
+
+## Relation to Sustainability
+
+Our research is grounded in the sustainability imperatives outlined by the United Nations Sustainable Development Goals (SDGs), particularly Goals 1 (No Poverty), 3 (Good Health and Well-Being), 10 (Reduced Inequalities), and 11 (Sustainable Cities and Communities). These goals provide a framework for understanding and addressing the multifaceted challenges posed by gentrification in Brooklyn. For instance, as gentrification often exacerbates economic disparities and contributes to the displacement of marginalized communities, our investigation into its causes and impacts directly aligns with the SDG 1 goal of poverty reduction and SDG 10 goal of reducing inequalities. Additionally, the SDG 11 goal of sustainable cities and communities underscores the importance of urban development that promotes inclusivity, resilience, and environmental sustainability, concepts that are central to our inquiry.
+
+Furthermore, our research is guided by the principles of a Just Transition, as advocated by the Climate Justice Alliance. These principles emphasize the equitable redistribution of resources and power, aiming to address and transform existing social inequities based on race, class, gender, and other forms of oppression. By examining the historical, economic, and policy factors driving gentrification in Brooklyn, we seek to uncover the systemic injustices perpetuated by current urban development paradigms and explore pathways towards more just and sustainable outcomes. In doing so, our research not only contributes to the broader discourse on urban sustainability but also advances efforts to create communities that are equitable, inclusive, and environmentally resilient.
+
+# test header 2
+
+## subheader test
+
+
+
