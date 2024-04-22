@@ -260,7 +260,7 @@ ggplot(estab_change, aes(x=Category, y=PercentageChange, fill=Status))+
 In New York City, there is identifiable change in the retail landscape in relation to whether a community is being gentrified. There is not consistency across sectors, but there is statistically significant difference in at least the expansion of convenience stores between gentrifying and poor areas, and also statistically significant difference in the expansion of convenience, fast-food, grocery, hair, and restaurant businesses between gentrifying and rich areas.
 
 Merwan:
-```{r, cache=True}
+```{r, cache=TRUE}
 library(readr)
 library(dplyr)
 zap <- read_csv(here("data", "Zoning_Application_Portal__ZAP__-_BBL_20240331.csv"))

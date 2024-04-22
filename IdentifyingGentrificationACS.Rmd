@@ -1,0 +1,262 @@
+---
+title: "IdentifyingGentrification_ACS"
+author: "Grant Miner"
+date: "2024-04-11"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidycensus)
+library(ggplot2)
+library(tidyverse)
+library(sp)
+```
+
+```{r}
+
+```
+
+```{r}
+census_key <- "4e7c5c593d662c481d605dba2a32b83911096ffe"
+```
+
+```{r, cache=TRUE}
+# census_api_key("4e7c5c593d662c481d605dba2a32b83911096ffe", install=TRUE)
+```
+
+```{r}
+race_vars <- c("B02001_001", "B02001_002", "B02001_003", "B02001_004", "B02001_005", "B02001_006", "B02001_007", "B02001_008", "B02001_009", "B02001_010")
+```
+
+```{r}
+race_2021 <- get_acs(geography="tract", state = "NY", county = "Kings", variables = race_vars, year = 2021, geometry = TRUE)
+race_2016 <- get_acs(geography="tract", state = "NY", county = "Kings", variables = race_vars, year = 2016, geometry = TRUE)
+race_2011 <- get_acs(geography="tract", state = "NY", county = "Kings", variables = race_vars, year = 2011, geometry = TRUE)
+```
+```{r}
+totals_2021 <-
+  get_acs(geography="tract", state = "NY", county = "Kings", variables = race_vars, year = 2021) %>%
+  filter(variable == "B02001_001")%>%
+  select(GEOID, estimate, moe)
+
+totals_2016 <-
+  get_acs(geography="tract", state = "NY", county = "Kings", variables = race_vars, year = 2016) %>%
+  filter(variable == "B02001_001")%>%
+  select(GEOID, estimate, moe)
+
+totals_2011 <-
+  get_acs(geography="tract", state = "NY", county = "Kings", variables = race_vars, year = 2011) %>%
+  filter(variable == "B02001_001")%>%
+  select(GEOID, estimate, moe)
+```
+
+Add a column to the race datasets that represents the percentage of the estimate for the B02001 variable represented by each other variable.
+```{r}
+race_percentage_2021 <- race_2021 %>%
+  group_by(GEOID) %>%
+  filter(variable != "B02001_001") %>%
+  left_join(totals_2021, by="GEOID")%>%
+  mutate(percentage = estimate.x/estimate.y)
+
+race_percentage_2016 <- race_2016 %>%
+  group_by(GEOID) %>%
+  filter(variable != "B02001_001") %>%
+  left_join(totals_2016, by="GEOID")%>%
+  mutate(percentage = estimate.x/estimate.y)
+
+race_percentage_2011 <- race_2011 %>%
+  group_by(GEOID) %>%
+  filter(variable != "B02001_001") %>%
+  left_join(totals_2011, by="GEOID")%>%
+  mutate(percentage = estimate.x/estimate.y)
+```
+
+Now merge the two datasets with a new column for the year
+
+```{r}
+race_delta <-
+  race_percentage_2021 %>%
+  select(GEOID, variable, percentage) %>%
+  left_join(race_percentage_2016 %>% st_drop_geometry() %>% select(GEOID, variable, percentage), by = c("GEOID", "variable"), suffix = c("_2021", "_2016")) %>%
+  left_join(race_percentage_2011 %>% st_drop_geometry() %>% select(GEOID, variable, percentage), by = c("GEOID", "variable")) %>%
+  mutate(percentage_2011 = percentage)%>%
+  select(-percentage)%>%
+  mutate(difference_5yr = percentage_2021 - percentage_2016)%>%
+  mutate(difference_10yr = percentage_2021 - percentage_2011) %>%
+  mutate(difference_5yr_old = percentage_2016 - percentage_2011)
+```
+```{r}
+race_delta_white <-
+  race_delta %>%
+  filter(variable == "B02001_002")
+```
+
+```{r}
+ggplot(race_delta_white, aes(fill = difference_5yr)) +
+  geom_sf() +
+  scale_fill_gradient2(low = "blue", high = "red", mid = "white", midpoint = 0) +
+  theme_minimal() +
+  theme(legend.position = "bottom") +
+  labs(title = "Change in White Population Brooklyn Census Tract, 2016-2021", fill = "Change in Percentage", caption = "Data Source: US Census Bureau ACS 5-Year Estimates", x = "Longitude", y = "Latitude")
+```
+
+```{r}
+ggplot(race_delta_white, aes(fill = difference_5yr_old)) +
+  geom_sf() +
+  scale_fill_gradient2(low = "blue", high = "red", mid = "white", midpoint = 0) +
+  theme_minimal() +
+  theme(legend.position = "bottom") +
+  labs(title = "Change in White Population Brooklyn Census Tract, 2011-2016", fill = "Change in Percentage", caption = "Data Source: US Census Bureau ACS 5-Year Estimates", x = "Longitude", y = "Latitude")
+```
+
+```{r}
+ggplot(race_delta_white, aes(fill = difference_10yr)) +
+  geom_sf() +
+  scale_fill_gradient2(low = "blue", high = "red", mid = "white", midpoint = 0) +
+  theme_minimal() +
+  theme(legend.position = "bottom") +
+  labs(title = "Change in White Population Brooklyn Census Tract, 2011-2021", fill = "Change in Percentage", caption = "Data Source: US Census Bureau ACS 5-Year Estimates", x = "Longitude", y = "Latitude")
+```
+
+```{r}
+property_sales_2023 <- read_excel(here("data", "Brooklyn Sales 2023.xlsx"), sheet = "Brooklyn", skip = 6)
+property_sales_2022 <- read_excel(here("data", "Brooklyn 2022 Sales.xlsx"), sheet = "Brooklyn", skip = 6)
+property_sales_2021 <- read_excel(here("data", "Brooklyn 2021 Sales.xlsx"), sheet = "Brooklyn", skip = 6)
+property_sales_2020 <- read_excel(here("data", "Brooklyn 2020 Sales.xlsx"), sheet = "Brooklyn", skip = 6)
+property_sales_2019 <- read_excel(here("data", "Brooklyn 2019 Sales.xlsx"), sheet = "Brooklyn", skip = 4)
+property_sales_2018 <- read_excel(here("data", "Brooklyn 2018 Sales.xlsx"), sheet = "Brooklyn", skip = 4)
+property_sales_2017 <- read_excel(here("data", "Brooklyn 2017 Sales.xls"), sheet = "Brooklyn", skip = 4)
+property_sales_2016 <- read_excel(here("data", "Brooklyn 2016 Sales.xls"), sheet = "Brooklyn", skip = 4)
+property_sales_2015 <- read_excel(here("data", "Brooklyn 2015 Sales.xls"), sheet = "Brooklyn", skip = 4)
+property_sales_2014 <- read_excel(here("data", "Brooklyn 2014 Sales.xls"), sheet = "Brooklyn", skip = 4)
+property_sales_2013 <- read_excel(here("data", "Brooklyn 2013 Sales.xls"), sheet = "Brooklyn", skip = 4)
+```
+
+```{r}
+colnames(property_sales_2023) <- as.character(gsub("\\s+", " ", gsub(" $", "", gsub("[\r|\n]+", " ", tolower(colnames(property_sales_2023))))))
+colnames(property_sales_2022) <- as.character(gsub("\\s+", " ", gsub(" $", "", gsub("[\r|\n]+", " ", tolower(colnames(property_sales_2022))))))
+colnames(property_sales_2021) <- as.character(gsub("\\s+", " ", gsub(" $", "", gsub("[\r|\n]+", " ", tolower(colnames(property_sales_2021))))))
+colnames(property_sales_2020) <- as.character(gsub("\\s+", " ", gsub(" $", "", gsub("[\r|\n]+", " ", tolower(colnames(property_sales_2020))))))
+colnames(property_sales_2019) <- as.character(gsub("\\s+", " ", gsub(" $", "", gsub("[\r|\n]+", " ", tolower(colnames(property_sales_2019))))))
+colnames(property_sales_2018) <- as.character(gsub("\\s+", " ", gsub(" $", "", gsub("[\r|\n]+", " ", tolower(colnames(property_sales_2018))))))
+colnames(property_sales_2017) <- as.character(gsub("\\s+", " ", gsub(" $", "", gsub("[\r|\n]+", " ", tolower(colnames(property_sales_2017))))))
+colnames(property_sales_2016) <- as.character(gsub("\\s+", " ", gsub(" $", "", gsub("[\r|\n]+", " ", tolower(colnames(property_sales_2016))))))
+colnames(property_sales_2015) <- as.character(gsub("\\s+", " ", gsub(" $", "", gsub("[\r|\n]+", " ", tolower(colnames(property_sales_2015))))))
+colnames(property_sales_2014) <- as.character(gsub("\\s+", " ", gsub(" $", "", gsub("[\r|\n]+", " ", tolower(colnames(property_sales_2014))))))
+colnames(property_sales_2013) <- as.character(gsub("\\s+", " ", gsub(" $", "", gsub("[\r|\n]+", " ", tolower(colnames(property_sales_2013))))))
+```
+
+```{r}
+property_sales_2023 <- property_sales_2023 %>%
+  select(neighborhood, "building class category", block, lot, "ease-ment", address, "apartment number", "zip code", "residential units", "commercial units", "total units", "land square feet", "gross square feet", "year built", "building class at time of sale", "sale price", "sale date")
+
+property_sales_2022 <- property_sales_2022 %>%
+  select(neighborhood, "building class category", block, lot, "ease-ment", address, "apartment number", "zip code", "residential units", "commercial units", "total units", "land square feet", "gross square feet", "year built", "building class at time of sale", "sale price", "sale date")
+
+property_sales_2021 <- property_sales_2021 %>%
+  select(neighborhood, "building class category", block, lot, "ease-ment", address, "apartment number", "zip code", "residential units", "commercial units", "total units", "land square feet", "gross square feet", "year built", "building class at time of sale", "sale price", "sale date")
+
+property_sales_2020 <- property_sales_2020 %>%
+  select(neighborhood, "building class category", block, lot, "ease-ment", address, "apartment number", "zip code", "residential units", "commercial units", "total units", "land square feet", "gross square feet", "year built", "building class at time of sale", "sale price", "sale date")
+
+property_sales_2019 <- property_sales_2019 %>%
+  select(neighborhood, "building class category", block, lot, "ease-ment", address, "apartment number", "zip code", "residential units", "commercial units", "total units", "land square feet", "gross square feet", "year built", "building class at time of sale", "sale price", "sale date")
+
+property_sales_2018 <- property_sales_2018 %>%
+  select(neighborhood, "building class category", block, lot, "ease-ment", address, "apartment number", "zip code", "residential units", "commercial units", "total units", "land square feet", "gross square feet", "year built", "building class at time of sale", "sale price", "sale date")
+
+property_sales_2017 <- property_sales_2017 %>%
+  select(neighborhood, "building class category", block, lot, "ease-ment", address, "apartment number", "zip code", "residential units", "commercial units", "total units", "land square feet", "gross square feet", "year built", "building class at time of sale", "sale price", "sale date")
+
+property_sales_2016 <- property_sales_2016 %>%
+  select(neighborhood, "building class category", block, lot, "ease-ment", address, "apartment number", "zip code", "residential units", "commercial units", "total units", "land square feet", "gross square feet", "year built", "building class at time of sale", "sale price", "sale date")
+
+property_sales_2015 <- property_sales_2015 %>%
+  select(neighborhood, "building class category", block, lot, "ease-ment", address, "apartment number", "zip code", "residential units", "commercial units", "total units", "land square feet", "gross square feet", "year built", "building class at time of sale", "sale price", "sale date")
+
+property_sales_2014 <- property_sales_2014 %>%
+  select(neighborhood, "building class category", block, lot, "ease-ment", address, "apartment number", "zip code", "residential units", "commercial units", "total units", "land square feet", "gross square feet", "year built", "building class at time of sale", "sale price", "sale date")
+
+property_sales_2013 <- property_sales_2013 %>%
+  select(neighborhood, "building class category", block, lot, "ease-ment", address, "apartment number", "zip code", "residential units", "commercial units", "total units", "land square feet", "gross square feet", "year built", "building class at time of sale", "sale price", "sale date")
+```
+
+```{r}
+
+```
+
+```{r}
+property_sales_2013_2023 <- bind_rows(property_sales_2013, property_sales_2014, property_sales_2015, property_sales_2016, property_sales_2017, property_sales_2018, property_sales_2019, property_sales_2020, property_sales_2021, property_sales_2022, property_sales_2023)
+```
+
+```{r}
+property_sales_2013_2023_grouped <- property_sales_2013_2023 %>%
+  filter(`sale price` > 0) %>%
+  group_by(block, lot)
+```
+
+
+Find all groups of rows that have matching block and lot numbers.
+```{r}
+sales_test <- property_sales_2013_2023_grouped %>%
+  group_by(block, lot, `sale date`) %>%
+  filter(n_distinct(`sale price`) > 1) %>%
+  summarise(purchase_prices = list(`sale price`), purchase_dates = list(as.Date(`sale date`)))
+
+sales_test_delta <- sales_test %>%
+  mutate(appreciation = as.numeric(unlist(purchase_prices)[2]) - as.numeric(unlist(purchase_prices)[1])) %>%
+  mutate(`time held` = as.Date(unlist(purchase_dates)[2]) - as.Date(unlist(purchase_dates)[1]))
+
+# sales_test <- sales_test %>%
+#   tidyr::unnest_wider(purchase_prices) %>%
+#   tidyr::unnest_wider(purchase_dates)
+# 
+```
+
+```{r}
+property_value_growth <- property_sales_2013_2023_grouped %>%
+  filter(`sale price` > 1) %>%
+  arrange(block, lot, `sale date`) %>%
+  filter(n_distinct(`sale price`) > 1) %>%
+  select(block, lot, `sale price`, `sale date`) %>%
+  group_by(block, lot)%>%
+  mutate(price_diff = c(NA, diff(`sale price`))) %>%
+  mutate(date_diff = c(NA, diff(as.numeric(`sale date`)))) %>%
+  filter(!is.na(price_diff) & price_diff > 0) %>%
+  select(block, lot, price_diff, date_diff)
+```
+
+```{r}
+bayridge_appreciation <- property_value_growth %>%
+  filter(block >= 5749 & block <= 6143)
+
+bedstuy_appreciation <- property_value_growth %>%
+  filter(block >= 1578 & block <= 2022)
+```
+
+```{r}
+
+ggplot(bayridge_appreciation, aes(x = date_diff, y = price_diff)) +
+  geom_point() +
+  geom_smooth() +
+  labs(title = "Bay Ridge Property Appreciation", x = "Time Held", y = "Appreciation")+
+  ylim(0, 1000000)+
+  xlim(0, 31536000)
+
+ggplot(bedstuy_appreciation, aes(x = date_diff, y = price_diff)) +
+  geom_point() +
+  geom_smooth() +
+  labs(title = "Bed-Stuy Property Appreciation", x = "Time Held", y = "Appreciation")+
+  xlim(0, 31536000)+
+  ylim(0, 1e+06)
+```
+
+```{r})
+```
+
+```{r}
+```
+
+```{r}
+```
