@@ -1,0 +1,52 @@
+---
+title: "Untitled"
+author: "Merwan Yeditha"
+date: "2024-04-11"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(choroplethr)
+library
+```
+
+```{r, results='hide', echo=FALSE}
+unique_counties <-unique(floor(tract_map$region/1000000))
+
+mdfami_map <- data.frame("region"=x$tractid, "value"=x$mdfami0016)
+mdfami <- tract_choropleth(
+  mdfami_map,
+  state_name="new york",
+  county_zoom=unique_counties,
+  title="% Change in Median Family Income 2000 to 2016"
+)
+
+rent_map <- data.frame("region"=x$tractid, "value"=x$mdrent0016)
+rent <- tract_choropleth(
+  rent_map,
+  state_name="new york",
+  county_zoom=unique_counties,
+  title="% Change in Rent 2000 to 2016"
+)
+
+nhw_map <- data.frame("region"=x$tractid, "value"=x$NHW0016)
+nhw <- tract_choropleth(
+  nhw_map,
+  state_name="new york",
+  county_zoom=unique_counties,
+  title="% Change in Non-Hispanic White Pop. 2000 to 2016"
+)
+```
+```{r}
+nhw
+```
+
+```{r}
+rent
+```
+
+```{r}
+mdfami
+```
