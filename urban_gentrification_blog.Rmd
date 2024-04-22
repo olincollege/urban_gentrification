@@ -6,7 +6,7 @@ output:
 
 ---
 
-# Urban Gentrification in Brooklyn, New York
+# Introduction to Urban Gentrification in Brooklyn, New York
 
 Brooklyn, once an emblem of cultural diversity and resilience, now stands at the forefront of urban transformation. From its humble beginnings as a haven for immigrants and working-class families to its current status as a hotspot for upscale living and commercial development, the borough's journey reflects the ebb and flow of societal shifts.
 
@@ -20,15 +20,31 @@ Thus, our research question emerges: What historical, economic, and policy facto
 
 Through this exploration, we seek not only to understand the past and present dynamics but also to inform future urban planning efforts, advocating for equitable development that preserves the diverse fabric of Brooklyn's communities while fostering vibrant and inclusive retail environments.
 
-## Relation to Sustainability
+## Gentrification and Sustainability
 
-Our research is grounded in the sustainability imperatives outlined by the United Nations Sustainable Development Goals (SDGs), particularly Goals 1 (No Poverty), 3 (Good Health and Well-Being), 10 (Reduced Inequalities), and 11 (Sustainable Cities and Communities). These goals provide a framework for understanding and addressing the multifaceted challenges posed by gentrification in Brooklyn. For instance, as gentrification often exacerbates economic disparities and contributes to the displacement of marginalized communities, our investigation into its causes and impacts directly aligns with the SDG 1 goal of poverty reduction and SDG 10 goal of reducing inequalities. Additionally, the SDG 11 goal of sustainable cities and communities underscores the importance of urban development that promotes inclusivity, resilience, and environmental sustainability, concepts that are central to our inquiry.
+Our research is grounded in the sustainability imperatives outlined by the United Nations Sustainable Development Goals (SDGs), particularly Goals 1 (No Poverty), 3 (Good Health and Well-Being), 10 (Reduced Inequalities), and 11 (Sustainable Cities and Communities).^[https://sdgs.un.org/goals]. These goals provide a framework for understanding and addressing the multifaceted challenges posed by gentrification in Brooklyn. For instance, as gentrification often exacerbates economic disparities and contributes to the displacement of marginalized communities, our investigation into its causes and impacts directly aligns with the SDG 1 goal of poverty reduction and SDG 10 goal of reducing inequalities. Additionally, the SDG 11 goal of sustainable cities and communities underscores the importance of urban development that promotes inclusivity, resilience, and environmental sustainability, concepts that are central to our inquiry.
 
-Furthermore, our research is guided by the principles of a Just Transition, as advocated by the Climate Justice Alliance. These principles emphasize the equitable redistribution of resources and power, aiming to address and transform existing social inequities based on race, class, gender, and other forms of oppression. By examining the historical, economic, and policy factors driving gentrification in Brooklyn, we seek to uncover the systemic injustices perpetuated by current urban development paradigms and explore pathways towards more just and sustainable outcomes. In doing so, our research not only contributes to the broader discourse on urban sustainability but also advances efforts to create communities that are equitable, inclusive, and environmentally resilient.
+Furthermore, our research is guided by the principles of a Just Transition, as advocated by the Climate Justice Alliance.^[https://climatejusticealliance.org/just-transition/] These principles emphasize the equitable redistribution of resources and power, aiming to address and transform existing social inequities based on race, class, gender, and other forms of oppression. By examining the historical, economic, and policy factors driving gentrification in Brooklyn, we seek to uncover the systemic injustices perpetuated by current urban development paradigms and explore pathways towards more just and sustainable outcomes. In doing so, our research not only contributes to the broader discourse on urban sustainability but also advances efforts to create communities that are equitable, inclusive, and environmentally resilient.
 
-# test header 2
+# Background on Gentrification in Brooklyn
 
-## subheader test
+Insert general graphs showing trends of gentrification in Brooklyn
+
+# Why has Brooklyn Gentrified?
+
+Gentrification can be driven by various factors, many of them being intertwined. In our research we've identified five leading factors that may have lead to gentrification in Brooklyn. These factors and their supporting stories/visualizations are discussed in the sections below.
+
+## Zoning Policies
+
+## Tax Incentives
+
+## Displacement of Public Housing
+
+## Real Estate Speculation
+
+## Transportation Infrastructure
+
+# Conclusion
 
 
 
