@@ -1,0 +1,300 @@
+---
+title: "Gentrification_V1"
+author: "Cara Mulrooney"
+date: "2024-04-11"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+remotes::install_github("mfherman/nycgeo")
+library(dplyr)
+library(readxl)
+library(nycgeo)
+library(sf)
+library(tidyverse)
+library(readr)
+library(gridExtra)
+library(here)
+library(tidyr)
+library(sf)
+library(leaflet)
+library(leaflet.extras)
+```
+
+```{r}
+geoid_gent <- read_excel(here("data","udp_ny_final_typology_jan_2019.xlsx"))
+
+nyc_boundaries(geography = "tract")
+
+bk_qn_tracts <- nyc_boundaries(
+  geography = "tract",
+  filter_by = "borough",
+  region = c("brooklyn")
+  )
+
+bk_qn_tracts1 <- transform(bk_qn_tracts,
+							geoid = as.numeric(geoid))
+```
+
+```{r fig.width=10}
+result <- left_join(bk_qn_tracts1, geoid_gent, by = "geoid")
+
+result <- result %>%
+  mutate(gent_level = str_extract(Type_1.19, "(?<=-).*"))
+
+#result$gent_level <- factor(result$gent_level, 
+#                      levels = c("Not Losing Low-Income Households", "At Risk of #Gentrification", "Ongoing Displacement of Low-Income Households", "Ongoing #Gentrification", "Advanced Gentrification", "Stable Exclusion", "Ongoing Exclusion", #"Super Gentrification or Exclusion"))
+
+
+ggplot(result) +
+geom_sf(aes(fill = gent_level)) +
+theme_void() +
+theme(panel.grid = element_line(color = "transparent")) +
+labs(title = "Which neighborhoods have a high risk of gentrification?", fill="Gentrification Level")
+```
+
+```{r}
+pub_housing <- read_csv(here("data","public_housing_data.csv"))
+
+nyc_boundaries(geography = "cd")
+
+bk_qn_tracts2 <- nyc_boundaries(
+  geography = "cd",
+  filter_by = "borough",
+  region = c("brooklyn"),
+  )
+
+bk_qn_tracts2 <- dplyr::filter(bk_qn_tracts2, grepl("Brooklyn Community District",cd_name))
+
+pub_housing <- pub_housing %>%
+  filter(Level == "Community District") %>%
+  filter(grepl("BK",Geography)) %>%
+  mutate(cd_id = str_extract(Geography, "\\d+"),
+         cd_id = gsub("^0+(?!$)", "", cd_id, perl=TRUE))
+  
+result_housing <- left_join(bk_qn_tracts2, pub_housing, by = "cd_id")
+
+result_housing$public_housing <- as.numeric(sub("%", "", result_housing$public_housing))
+```
+
+```{r fig.width=10}
+ggplot(result_housing) +
+geom_sf(aes(fill = public_housing)) +
+theme_void() +
+theme(panel.grid = element_line(color = "transparent")) +
+labs(title = "Share of Rental Units Located in Public Housing in 2022", fill="Public Housing Rental Units (%)")
+```
+
+```{r}
+williamsburg <- read_excel(here("data", "BK01_NeighborhoodDataProfile.xlsx"), sheet = "BK 01 Data")
+
+williamsburg1 <- williamsburg %>%
+  filter(`Indicator Category` == "Housing Market and Conditions") %>%
+  filter(grepl("Index of housing price appreciation",Indicator)) %>%
+  tidyr::pivot_longer(cols = c("2000","2006","2010","2019","2021","2022")) %>%
+  mutate(Indicator = str_extract(Indicator, "(?<=,).*")) %>%
+  transform(value = as.numeric(value))
+
+p<-ggplot(williamsburg1, aes(x=name, y=value, group=Indicator)) +
+  geom_line(aes(color=Indicator))+
+  geom_point(aes(color=Indicator))+
+  labs(x="Year", y="Percentage Change", title="Average Price Changes of Repeated Property Sales - Williamsburg", color = "Property Type")
+```
+```{r}
+brooklyn <- read_excel("data/BK_NeighborhoodDataProfile.xlsx", sheet = "BK Data")
+
+brooklyn1 <- brooklyn %>%
+  filter(`Indicator Category` == "Housing Market and Conditions") %>%
+  filter(grepl("Index of housing price appreciation",Indicator)) %>%
+  tidyr::pivot_longer(cols = c("2000","2006","2010","2019","2021","2022")) %>%
+  mutate(Indicator = str_extract(Indicator, "(?<=,).*")) %>%
+  transform(value = as.numeric(value))
+
+p1<-ggplot(brooklyn1, aes(x=name, y=value, group=Indicator)) +
+  geom_line(aes(color=Indicator))+
+  geom_point(aes(color=Indicator))+
+  labs(x="Year", y="Percentage Change", title="Average Price Changes of Repeated Property Sales - Brooklyn", color = "Property Type")
+```
+
+```{r}
+ggplot() + 
+  geom_line(data = williamsburg1, aes(x = name, y = value, group = Indicator, color = Indicator, linetype="Williamsburg")) +
+  geom_point(data = williamsburg1, aes(x = name, y = value, color = Indicator)) +
+  geom_line(data = brooklyn1, aes(x = name, y = value, group = Indicator, color = Indicator, linetype = "Brooklyn Overall")) +
+  geom_point(data = brooklyn1, aes(x = name, y = value, color = Indicator)) +
+  scale_linetype_manual(values = c("Williamsburg" = "solid", "Brooklyn Overall" = "dotted")) +
+  labs(x="Year", y="Percentage Change", linetype = "Area", title="Average Price Changes of Repeated Property Sales", color = "Property Type")
+
+```
+```{r fig.width=40 fig.height=30}
+# Redlining (https://a816-dohbesp.nyc.gov/IndicatorPublic/data-stories/redlining/)
+redlining <- read_csv(here("data", "redlining.csv"))
+
+df_long <- pivot_longer(redlining, `Percent labeled Declining`:`Percent labeled Hazardous`, names_to = "Category", values_to = "Percent")  
+df_long
+
+df_long <- df_long %>%
+  mutate(Percent_value = Percent * 100)
+
+df_long$Percent_value2 <- paste0(sprintf("%.1f", df_long$Percent_value), "%")
+
+ggplot(df_long, aes(x = boro_cd, y = Percent_value, fill = Category, label= Percent_value2)) +
+  geom_bar(stat = "identity") +
+  geom_text(size = 2, position = position_stack(vjust = 0.5)) +
+  coord_flip() +
+  scale_fill_discrete(name = "Classification", labels = c("Declining", "Hazardous"))+
+  labs(y = "Percent", x="Community District", title="Redlining in Brooklyn")
+```
+```{r}
+housing_df <- read_csv(here("data", "HousingDB_post2010_inactive_included.csv"))
+housing_df <- housing_df[,c("Boro","AddressNum","AddressSt","Occ_Prop","DateFiled","DatePermit","DateLstUpd","DateComplt","Ownership","CenTract20","CommntyDst","Latitude","Longitude")]
+
+housing_df <- housing_df %>%
+  filter(Boro == "3")
+
+result_housing_centract <- left_join(bk_qn_tracts1, housing_df, by=c("geoid"="CenTract20"))
+
+```
+```{r fig.width=10}
+ggplot(result_housing_centract) +
+geom_sf(aes(fill = Ownership)) +
+theme_void() +
+theme(panel.grid = element_line(color = "transparent")) +
+labs(title = "Property Ownership in Brooklyn", fill="Ownership Type")
+```
+```{r}
+# Create a new column based on conditions
+result_housing_centract <- result_housing_centract %>%
+  mutate(New_Column = case_when(
+    grepl("NYCHA/HHC|NYCHA|HPD", Ownership, ignore.case = TRUE) ~ gsub("^Government, City: ", "", Ownership),
+    TRUE ~ gsub(":.*", "", Ownership)
+  ))
+
+ggplot(result_housing_centract) +
+geom_sf(aes(fill = New_Column)) +
+theme_void() +
+theme(panel.grid = element_line(color = "transparent")) +
+labs(title = "Property Ownership in Brooklyn", fill="Ownership Type")
+```
+```{r}
+# Preprocess data to categorize ownership types
+result_housing_centract <- result_housing_centract %>%
+  mutate(Ownership_Category = case_when(
+    grepl("^Government", Ownership) ~ "Government",
+    grepl("^Private For-Profit", Ownership) ~ "Private For-Profit",
+    grepl("^Private Non-Profit", Ownership) ~ "Private Non-Profit",
+    TRUE ~ "Other"
+  ),
+  Subcategory = sub("^.*?: ", "", Ownership)) %>%
+  filter(!is.na(Ownership_Category))
+
+# Create stacked bar chart
+ggplot(result_housing_centract, aes(x = Ownership_Category, fill = Subcategory)) +
+  geom_bar() +
+  labs(x = "Ownership Category", y = "Count", title = "Ownership Distribution with Subcategories") +
+  theme_minimal()
+
+ggplot(result_housing_centract) +
+geom_sf(aes(fill = Ownership_Category)) +
+theme_void() +
+theme(panel.grid = element_line(color = "transparent")) +
+labs(title = "Property Ownership in Brooklyn", fill="Ownership Type")
+
+```
+```{r}
+percent_prop_ownership <- result_housing_centract %>% 
+    group_by(Ownership) %>% 
+    summarise(Percent = 100 * n() / nrow(result_housing_centract) )
+```
+
+```{r}
+pub_housing_tracts_df <- result_housing_centract %>%
+  filter(New_Column %in%  c("HPD", "NYCHA", "NYCHA/HHC"))
+
+pubhousingtracts <- as.list(unique(pub_housing_tracts_df$geoid))
+```
+
+```{r}
+housing_status <- read_csv(here("data", "HousingDB_by_2020_CensusTract.csv"))
+
+tract_neighborhood <- result_housing_centract %>%
+  subset(select = c(geoid, nta_name))
+tract_neighborhood <- unique(tract_neighborhood)
+
+housing_status<- left_join(housing_status,tract_neighborhood, by=c("centract2020"="geoid"))
+brooklyn_housing_status <- housing_status[!is.na(housing_status$nta_name),] 
+
+housing_status <- brooklyn_housing_status %>%
+  mutate(comp_total = select(., comp2010:comp2023) %>% 
+  rowSums(na.rm = TRUE)) %>%
+  subset(select = c(centract2020, nta_name, comp_total, filed, approved, permitted, withdrawn, inactive))
+
+pub_housing_status <- housing_status %>%
+  filter(centract2020 %in%  pubhousingtracts)
+
+non_pub_housing_status <- housing_status %>%
+  anti_join(pub_housing_status, by="centract2020")
+```
+```{r}
+# census tracts with public housing
+# comptotal is completed housing units 2010 to 2023
+pub_housing_status_long <- pivot_longer(pub_housing_status, comp_total:inactive, names_to = "Category", values_to = "Number")  
+pub_housing_status_long
+
+ggplot(pub_housing_status_long, aes(fill=Category, y=Number, x=nta_name)) + 
+    geom_bar(position="dodge", stat="identity")+ 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+```
+
+```{r}
+# census tracts without public housing
+# comptotal is completed housing units 2010 to 2023
+non_pub_housing_status_long <- pivot_longer(non_pub_housing_status, comp_total:inactive, names_to = "Category", values_to = "Number")  
+non_pub_housing_status_long
+
+ggplot(non_pub_housing_status_long, aes(fill=Category, y=Number, x=nta_name)) + 
+    geom_bar(position="dodge", stat="identity")+ 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+```
+
+```{r}
+public_dev <- read_csv(here("data", "NYCHA_Public_Housing_Developments.csv"))
+
+public_dev %>%
+  group_by(BOROUGH) %>% 
+  ggplot(aes(x = BOROUGH)) + 
+  geom_bar(stat = "count") # stat = "count" is implied in the first example
+
+pub_brooklyn <- public_dev %>%
+  group_by(BOROUGH)
+
+# Convert the dataframe to an sf object
+sf_df <- st_as_sf(public_dev, wkt = "the_geom")
+
+pub_brooklyn_sf_df <- st_as_sf(pub_brooklyn, wkt = "the_geom")
+
+# Plot the choropleth map
+ggplot() +
+  geom_sf(data = sf_df, fill = "red", color = "red") +
+  labs(title = "Choropleth Map of Areas")
+
+```
+
+```{r}
+leaflet() %>%
+  addTiles() %>%
+  addPolygons(data = sf_df,
+              fillColor = "purple",
+              fillOpacity = 1,
+              color = "purple",
+              stroke = TRUE,
+              weight = 1,
+              popup = ~the_geom,
+              label=~DEVELOPMEN) %>%
+  addFullscreenControl()
+
+```
