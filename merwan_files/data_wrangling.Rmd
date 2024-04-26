@@ -1,0 +1,63 @@
+---
+title: "Merwan Data Wrangling"
+author: "Merwan Yeditha"
+date: "2024-04-16"
+output: html_document
+---
+
+## Gentrification Dataset
+[Data Source](https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/O56ZMB)
+This dataset contains measures of metrics considered to be indexes of gentrification in the years
+2000 and 2016. The data is separated by census tracts. 
+
+### Data Wrangling
+
+```{r}
+load('raw_data/Data_NYC_Gentrification_2000_16.RData')
+counties <- data.frame("Borough"= c("Bronx", "Brooklyn", "Manhattan", "Queens", "Staten Island"),
+                       "Borough_Code"=c("36005", "36047", "36061", "36081", "36085"))
+x <- x %>% 
+  mutate("Borough_Code"=substring(x$tractid, 0, 5)) %>% 
+  inner_join(counties, by="Borough_Code")
+x$Borough <- as_factor(x$Borough)
+
+x <-x %>% mutate("NHW00PCT"=NHW00/totpop00, "NHW16PCT"=NHW16/totpop16) %>% 
+  mutate("NHWPCTDIFF"=NHW16PCT-NHW00PCT) %>% 
+  mutate("POSNHWDIFF"= if_else (NHWPCTDIFF > 0, TRUE, FALSE))
+
+write.csv(x, 'clean_data/NYC_Gentrification_2000_16_clean.csv')
+```
+
+## HousingDB post 2010 Dataset
+
+[Data Source](https://www.nyc.gov/site/planning/data-maps/open-data/dwn-housing-database.page)
+This dataset comes from the NYC planning website. It contains records of all demolitions,
+alterations, and new constructions of housing through all boroughs since 2010. Though the
+data only concerns buildings completed after 2010, it contains data on the year of the permit,
+which provides information on when projects began, indicating years of high speculation and
+new construction.
+
+Limitations with this dataset include the fact that data is self-reported and not
+entirely is verified by the Departmentof City Planning (DCP). Additionally, they
+note that illegal conversion of housing stock cannot be recorded. As such,
+this dataset will not necessarily be representative in areas where illegal
+conversion is prevalent.
+
+### Data Wrangling
+
+```{r}
+housing <- read_csv("raw_data/HousingDB_post2010.csv")
+housing <- housing %>% 
+  mutate("Borough_Code"=substring(housing$CenTract20, 0, 5)) %>% 
+  inner_join(counties, by="Borough_Code")
+
+own_less <- as.factor(str_extract(housing$Ownership, "^[A-Za-z-, ]*"))
+housing <- housing %>% 
+  mutate("Ownership Abbrev"=own_less)
+housing <- housing[!is.na(housing$PermitYear),]
+housing <- housing[!is.na(housing$Job_Type),]
+housing <- housing[!is.na(housing$Ownership),]
+housing <- housing[!is.na(housing$`Ownership Abbrev`),]
+
+write.csv(housing, 'clean_data/HousingDB_post2010_clean.csv')
+```
