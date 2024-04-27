@@ -1,0 +1,53 @@
+---
+title: "Data Visualizations"
+author: "Madie Tong"
+date: "2024-04-25"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(dplyr)
+library(ggplot2)
+library(stringr)
+library(tidyverse)
+library(tidycensus)
+library(tmap)
+library("readxl")
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Number of Qualified Units per Borough for each Tax Exemption Type 
+```{r}
+ggplot(residential_developments, aes(x=tax_type, y = units, fill=borough))+
+  geom_col(position="dodge") +
+  labs(x="Tax Exemption Type",y= "Number of Units per Borough", title="Units per Borough Qualified for Property Tax Exemption Completed (2010-2020)")
+
+```
+Low Income compared with 421a Qualified Units per borough
+```{r}
+units_low_income_421a <- read_csv("/home/mtong1/data-science/urban_gentrification/data/units_low_income_421a.csv")
+ggplot(units_low_income_421a, aes(x=borough,y=value, fill=unit_type)) + 
+  geom_bar(stat="identity", position="identity", alpha=.5)+
+  labs(x="Borough", y="Number of Units", title="Low Income and 421a Qualified Units per Borough (2010-2021)")
+
+```
+Median Gross Rent by Borough
+```{r}
+borough_median_rent = read_csv("/home/mtong1/data-science/urban_gentrification/data/borough_median_rent.csv")
+
+ggplot(borough_median_rent, aes(x=year, y=value, color=Name, group=Name))+
+  geom_point()+
+  geom_line()+
+  labs(x="Year", y="Rent ($)", title="Median Gross Rent by Borough (2006-2021)")
+```
+Median Gross Rent by Brooklyn Community Districts
+```{r}
+brooklyn_median_rent = read_csv("/home/mtong1/data-science/urban_gentrification/data/brooklyn_median_rent.csv")
+
+ggplot(brooklyn_median_rent, aes(x=year, y=rent, group=Name, color=Name)) +
+  geom_point()+
+  geom_line()+
+  labs(x="Year", y="Median Rent", title="Median Gross Rent by Neighborhood in Brooklyn (2006-2021)", col = "Neighborhood") +
+  theme(legend.title = element_text(size = 3), 
+               legend.text = element_text(size = 3))
+```
