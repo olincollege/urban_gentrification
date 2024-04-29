@@ -39,7 +39,9 @@ residential_developments = data.frame(
   tax_type = c("421a", "421a","421a","421a","421a","420c", "420c", "420c", "420c", "420c", "other", "other", "other", "other", "other", "none reported", "none reported", "none reported", "none reported", "none reported"),
   borough = c("bronx", "brooklyn", "manhattan", "queens", "staten_island","bronx", "brooklyn", "manhattan", "queens", "staten_island","bronx", "brooklyn", "manhattan", "queens", "staten_island","bronx", "brooklyn", "manhattan", "queens", "staten_island"),
   units = c(9216, 49654, 33791, 23573, 808, 15617, 6811, 3575, 3401, 292, 771, 2169, 1665, 2572, 140, 693, 7840, 7033, 2254, 30)
-)
+) 
+# %>%
+  # write.csv("/home/mtong1/data-science/urban_gentrification/data/residential_developments.csv", row.names=FALSE)
 ```
 Total Low Income Units 
 [link](https://furmancenter.org/neighborhoods/view/brooklyn)
@@ -63,6 +65,8 @@ borough_low_income_units <-
          mi_mod_units = as.double(gsub(",","", mi_mod_units)),
          market_rate_units = as.double(gsub(",","", market_rate_units)),
          unknown_units = as.double(gsub(",","", unknown_units)))
+  # write.csv("/home/mtong1/data-science/urban_gentrification/data/borough_low_income_units_2010_2020.csv", row.names=FALSE)
+  
 
 
 summed_borough_units <- 
@@ -95,6 +99,7 @@ units_low_income_421a <- merge(summed_borough_units, residential_developments, b
   select(!income_type) %>%
   pivot_longer(!borough, names_to = "unit_type", values_to = "value") %>%
   mutate(unit_type = recode(unit_type, total="Total Low Income Units", units_421a = "Total 421a Exempt Units"))
+  # write.csv("/home/mtong1/data-science/urban_gentrification/data/units_low_income_421a.csv", row.names = FALSE)
 ```
 Median Gross Rent 
 [link](https://furmancenter.org/neighborhoods/view/brooklyn)
