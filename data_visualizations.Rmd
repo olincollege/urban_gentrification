@@ -41,9 +41,8 @@ transit_points <- st_read(here("Clean_Data", "transit_points.shp"))
 
 
 ```{r message=FALSE, warning=FALSE}
-ggplot(transit_points) +
+transit_point_map<- ggplot(transit_points) +
     geom_sf() +
-    scale_fill_gradient(low = "#FCF5EE", high = "#E13728", guide = guide_legend(title = "Staten Island Population")) +
     theme_minimal() +
     theme(panel.grid.major = element_line("transparent"),
           axis.text = element_blank()) +
@@ -54,14 +53,15 @@ ggplot(transit_points) +
             legend.text = element_text(size = 8)) + 
       guides(shape = guide_legend(override.aes = list(size = 4)),
              color = guide_legend(override.aes = list(size = 4)))
-
+transit_point_map
 ```
 
 
-```{r, fig.height=8*4, fig.width=8*2, message=FALSE, waring=FALSE}
-desert_map <- clean_data %>%
+```{r message=FALSE, warning=FALSE, fig.height=8*4, fig.width=8*2}
+subway_map <- clean_data %>%
   ggplot() +
   geom_sf(aes(fill = sub_count), color = "#8f98aa") +
+  geom_sf(data = transit_points, size = 1.5) +
   scale_fill_gradientn(colors=c("#FCF5EE","#b5cbcf","#55717b","#0a4260"), na.value="#D6D6D6") +
   # https://www.color-hex.com/color-palette/100132
   theme_minimal() +
@@ -78,6 +78,7 @@ desert_map <- clean_data %>%
 rent_map <- clean_data %>%
   ggplot() +
   geom_sf(aes(fill = mean_rent), color = "#8f98aa") +
+  geom_sf(data = transit_points, size = 1.5) +
   scale_fill_gradientn(colors = c("#FCF5EE","#beafc2", "#8155ba", "#695e93")) +
   # https://www.color-hex.com/color-palette/1044873
   theme_minimal() +
@@ -94,6 +95,7 @@ rent_map <- clean_data %>%
 evict <- clean_data %>%
   ggplot() +
   geom_sf(aes(fill = eviction_count), color = "#8f98aa")+
+  geom_sf(data = transit_points, size = 1.5) +
   scale_fill_gradientn(colors = c("#FCF5EE", "#cce2cb", "#b6cfb6","#97c1a9")) +
   # https://www.color-hex.com/color-palette/1044832
   theme_minimal() +
@@ -110,6 +112,7 @@ evict <- clean_data %>%
 noncit <- clean_data %>%
   ggplot() +
   geom_sf(aes(fill = noncitizen_perc), color = "#8f98aa") +
+  geom_sf(data = transit_points, size = 1.5) +
   scale_fill_gradientn(colors = c("#FCF5EE","#ead1dc", "#d5a6bd", "#c27ba0")) +
   # https://www.color-hex.com/color-palette/1044826
   theme_minimal() +
@@ -123,16 +126,16 @@ noncit <- clean_data %>%
         legend.text = element_text(size = 20, face="bold", family="DIN Condensed"))+
   guides(fill = guide_colourbar(title = "Percent Non-Citizen", title.position="top", title.hjust = 0.5))
 
-ggarrange(desert_map, rent_map,evict, noncit,
+ggarrange(subway_map, rent_map,evict, noncit,
           ncol=2, nrow=2, padding = unit(3,
   "line"))
 
 ```
-
 ```{r message=FALSE, warning=FALSE}
 white <- clean_data %>%
   ggplot() +
   geom_sf(aes(fill = white_perc), color = "#8f98aa") +
+  geom_sf(data = transit_points, size = 1.5) +
   scale_fill_gradientn(colors = c("#FCF5EE","#919BB6", "#5A6687", "#3D465C")) +
   theme_minimal() +
   ggtitle("White Population \nby Neighborhood")+ 
@@ -148,6 +151,7 @@ white <- clean_data %>%
 black <- clean_data %>%
   ggplot() +
   geom_sf(aes(fill = black_perc), color = "#8f98aa") +
+  geom_sf(data = transit_points, size = 1.5) +
   scale_fill_gradientn(colors = c("#FCF5EE","#F8ABA6", "#F58581", "#DB3F37")) +
   theme_minimal() +
   ggtitle("Black Population \nby Neighborhood")+ 
@@ -163,6 +167,7 @@ black <- clean_data %>%
 asian <- clean_data %>%
   ggplot() +
   geom_sf(aes(fill = asian_perc), color = "#8f98aa") +
+  geom_sf(data = transit_points, size = 1.5) +
   scale_fill_gradientn(colors = c("#FCF5EE","#C1C5EC", "#A1A8E2", "#4451C5"),                      
                        guide = guide_colourbar(title = "Percent Asian")) +
   theme_minimal() +
@@ -179,6 +184,7 @@ asian <- clean_data %>%
 latinx <- clean_data %>%
   ggplot() +
   geom_sf(aes(fill = latinx_perc), color = "#8f98aa")+
+  geom_sf(data = transit_points, size = 1.5) +
   scale_fill_gradientn(colors = c("#FCF5EE","#F4E2B8", "#E9C572", "#E77E2F")) +
   theme_minimal() +
   ggtitle("Latinx Population \nby Neighborhood")+ 
@@ -193,14 +199,14 @@ latinx <- clean_data %>%
 ```
 
 ```{r, fig.height=8*4, fig.width=8*2, message=FALSE, warning=FALSE}
-ggarrange(desert_map, white, black, latinx, asian, 
+ggarrange(subway_map, white, black, latinx, asian, 
           ncol=3, nrow=2, padding = unit(3,
   "line"))
 ```
 
 
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 gg <- ggplot(clean_data) +
   geom_sf(fill = "antiquewhite") +
   theme_minimal() +
@@ -208,6 +214,7 @@ gg <- ggplot(clean_data) +
   geom_sf_label_interactive(aes(label = NTAName, tooltip = NTAName),
                             size = 1.5) + 
   theme(panel.background = element_rect(fill = "aliceblue"),
+        axis.title=element_blank(),
         axis.text = element_blank(),
         axis.text.y = element_blank(),
         axis.ticks = element_blank(),
@@ -215,6 +222,7 @@ gg <- ggplot(clean_data) +
 
 girafe(ggobj = gg)
 ```
+
 
 
 
