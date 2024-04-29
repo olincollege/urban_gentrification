@@ -1,0 +1,83 @@
+---
+title: "Gentrification_V1"
+author: "Cara Mulrooney"
+date: "2024-04-11"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# Load necessary packages
+remotes::install_github("mfherman/nycgeo")
+library(dplyr)
+library(readxl)
+library(nycgeo)
+library(sf)
+library(tidyverse)
+library(readr)
+library(gridExtra)
+library(here)
+library(tidyr)
+library(leaflet)
+library(leaflet.extras)
+```
+
+```{r}
+# Read gentrification level excel file
+geoid_gent <- read_excel(here("rawdata","udp_ny_final_typology_jan_2019.xlsx"))
+
+# Get Brooklyn census tract geography 
+nyc_boundaries(geography = "tract")
+bk_qn_tracts <- nyc_boundaries(
+  geography = "tract",
+  filter_by = "borough",
+  region = c("brooklyn")
+  )
+
+# Transform `geoid` column into numeric values
+bk_qn_tracts1 <- transform(bk_qn_tracts,
+							geoid = as.numeric(geoid))
+
+# Join gentrification level df with Brooklyn census tract df
+bk_gent_levels <- left_join(bk_qn_tracts1, geoid_gent, by = "geoid") %>%
+  subset(Type_1.19!="Missing Data")
+
+# Convert geometry column to WKT (Well-Known Text)
+bk_gent_levels$wkt_multipolygon <- sapply(bk_gent_levels$geometry, function(mp) {
+  st_as_text(st_geometry(mp))
+})
+
+# Write cleaned data shp file with geometry data
+# st_crs(bk_gent_levels, here("cleandata", "bk_gent_levels.shp"))
+```
+
+```{r fig.width=40 fig.height=30}
+# Read redlining csv file separating districts into hazardous or declining
+redlining <- read_csv(here("rawdata", "redlining.csv"), show_col_types = FALSE)
+
+# Pivot redlining df from wide to long format
+redlining_long <- pivot_longer(redlining, `Percent labeled Declining`:`Percent labeled Hazardous`, names_to = "Category", values_to = "Percent") %>%
+  mutate(Percent_value = Percent * 100)
+
+# Convert values into rounded percent
+redlining_long$Percent_value_label <- paste0(sprintf("%.1f", redlining_long$Percent_value), "%")
+
+# Write cleaned data csv file
+# write.csv(redlining_long,here("cleandata","bk_redlining_long.csv"), row.names = FALSE)
+```
+
+```{r}
+# Read csv file of nyc public housing developments
+public_dev <- read_csv(here("rawdata", "NYCHA_Public_Housing_Developments.csv"), show_col_types = FALSE)
+
+# Group by borough and remove rows with NA values
+public_dev <- public_dev %>%
+  group_by(BOROUGH) %>% 
+  na.omit()
+
+# Write cleaned data csv file
+# write.csv(public_dev,here("cleandata","bk_public_developments.csv"), row.names = FALSE)
+```

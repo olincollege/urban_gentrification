@@ -1,0 +1,99 @@
+---
+title: "Gentrification_V1"
+author: "Cara Mulrooney"
+date: "2024-04-11"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# Load necessary packages
+remotes::install_github("mfherman/nycgeo", force=TRUE)
+library(dplyr)
+library(readxl)
+library(nycgeo)
+library(sf)
+library(tidyverse)
+library(readr)
+library(gridExtra)
+library(here)
+library(tidyr)
+library(leaflet)
+library(leaflet.extras)
+```
+
+
+```{r}
+# Load Brooklyn gentrification census tract shp file
+shapefile <- st_read(here("cleandata", "bk_gent_levels.shp"))
+
+# Create list of color values for Brooklyn choropleth
+val <- c("#d8d5e8", "#aa93cb", "#005b6e","#8068a6", "#f9ce70","#ffaf5a" ,"#d64e00","#730000")
+
+# Create Brooklyn gentrification level choropleth
+ggplot(shapefile) +
+  geom_sf(aes(fill = Ty_1_19)) +
+  theme_void() +
+  theme(panel.grid = element_line(color = "transparent")) +
+  labs(title = "What areas have a high risk of gentrification?", fill="Gentrification Level") + 
+  scale_fill_manual(values=val,
+                    breaks = c("LI - Not Losing Low-Income Households",
+                               "LI - At Risk of Gentrification",
+                               "LI - Ongoing Displacement of Low-Income Households",
+                               "LI - Ongoing Gentrification",
+                               "MHI - Advanced Gentrification",
+                               "MHI - Stable Exclusion",
+                               "MHI - Ongoing Exclusion",
+                               "VHI - Super Gentrification or Exclusion" ),
+                    labels = c("Not Losing Low-Income Households", 
+                                "At Risk of Gentrification", 
+                               "Ongoing Displacement of Low-Income Households", 
+                              "Ongoing Gentrification", 
+                                "Advanced Gentrification", 
+                               "Stable Exclusion", 
+                                "Ongoing Exclusion", 
+                                "Super Gentrification or Exclusion"))
+```
+
+```{r}
+# Read clean csv file of Brooklyn census tract gentrification levels
+redlining_long <- read_csv(here("cleandata", "bk_redlining_long.csv"), show_col_types = FALSE)
+
+# Plot barchart showing districts and their hazardous and declining levels
+ggplot(redlining_long, aes(x = boro_cd, y = Percent_value, fill = Category, label= Percent_value_label)) +
+  geom_bar(stat = "identity") +
+  geom_text(size = 2.5, position = position_stack(vjust = 0.5)) +
+  coord_flip() +
+  scale_fill_discrete(name = "Classification", labels = c("Declining", "Hazardous"))+
+  labs(y = "Percent", x="Community District", title="Redlining in Brooklyn")
+```
+
+```{r}
+# Read clean csv file of NYC's public housing developments
+public_dev <- read_csv(here("cleandata", "bk_public_developments.csv"), show_col_types = FALSE)
+# Plot barchart of public housing across boroughs
+ggplot(public_dev, aes(x = fct_infreq(BOROUGH))) + 
+geom_bar(stat = "count")+
+labs(x="Borough", y="Development Count", title="Public Housing Developments Per Borough")
+```
+
+```{r}
+# Convert the public housing dataframe to an sf object
+sf_df <- st_as_sf(public_dev, wkt = "the_geom")
+
+# Create interactive map showing nyc public housing developments
+leaflet() %>%
+  addTiles() %>%
+  addPolygons(data = sf_df,
+              fillColor = "purple",
+              fillOpacity = 1,
+              color = "purple",
+              stroke = TRUE,
+              weight = 1,
+              popup = ~the_geom,
+              label=~DEVELOPMEN) %>%
+  addFullscreenControl()
+```
