@@ -120,8 +120,8 @@ ggplot(race_delta_white, aes(fill = difference_10yr)) +
 ```
 
 ```{r}
-property_sales_2023 <- read_excel(here("data", "Brooklyn Sales 2023.xlsx"), sheet = "Brooklyn", skip = 6)
 property_sales_2022 <- read_excel(here("data", "Brooklyn 2022 Sales.xlsx"), sheet = "Brooklyn", skip = 6)
+property_sales_2023 <- read_excel(here("data", "Brooklyn Sales 2023.xlsx"), sheet = "Brooklyn", skip = 6)
 property_sales_2021 <- read_excel(here("data", "Brooklyn 2021 Sales.xlsx"), sheet = "Brooklyn", skip = 6)
 property_sales_2020 <- read_excel(here("data", "Brooklyn 2020 Sales.xlsx"), sheet = "Brooklyn", skip = 6)
 property_sales_2019 <- read_excel(here("data", "Brooklyn 2019 Sales.xlsx"), sheet = "Brooklyn", skip = 4)
@@ -183,10 +183,6 @@ property_sales_2013 <- property_sales_2013 %>%
 ```
 
 ```{r}
-
-```
-
-```{r}
 property_sales_2013_2023 <- bind_rows(property_sales_2013, property_sales_2014, property_sales_2015, property_sales_2016, property_sales_2017, property_sales_2018, property_sales_2019, property_sales_2020, property_sales_2021, property_sales_2022, property_sales_2023)
 ```
 
@@ -195,7 +191,35 @@ property_sales_2013_2023_grouped <- property_sales_2013_2023 %>%
   filter(`sale price` > 0) %>%
   group_by(block, lot)
 ```
+```{r}
+neighborhood_classifications <- property_sales_2013_2023_grouped %>%
+  group_by(neighborhood) %>%
+  select(block, lot, neighborhood) %>%
+  arrange(block, lot)
+```
 
+```{r}
+ggplot(property_sales_2013_2023_grouped, aes(x=`sale date`))+
+  geom_density()
+```
+
+```{r}
+property_sales_williamsburg <- property_sales_2013_2023_grouped %>%
+  filter(neighborhood == "WILLIAMSBURG-NORTH" | neighborhood == "WILLIAMSBURG-EAST"| neighborhood == "WILLIAMSBURG-CENTRAL" | neighborhood == "WILLIAMSBURG-SOUTH")
+
+ggplot(property_sales_williamsburg, aes(x=`sale date`))+
+  geom_density()
+```
+```{r}
+ggplot(property_sales_williamsburg %>% filter(`sale price` > 1e+05 & `sale price` < 1e+07), aes(x=`sale date`, y=`sale price`))+
+  geom_point()+
+  geom_smooth()+
+  scale_y_continuous(trans='log10', limits=c(1e+05, 1e+07))+
+  labs(title = "Williamsburg Property Sales", x = "Sale Date", y = "Sale Price")
+```
+
+```{r}
+```
 
 Find all groups of rows that have matching block and lot numbers.
 ```{r}
@@ -219,20 +243,12 @@ property_value_growth <- property_sales_2013_2023_grouped %>%
   filter(`sale price` > 1) %>%
   arrange(block, lot, `sale date`) %>%
   filter(n_distinct(`sale price`) > 1) %>%
-  select(block, lot, `sale price`, `sale date`) %>%
+  select(block, lot, neighborhood, `sale price`, `sale date`) %>%
   group_by(block, lot)%>%
   mutate(price_diff = c(NA, diff(`sale price`))) %>%
   mutate(date_diff = c(NA, diff(as.numeric(`sale date`)))) %>%
   filter(!is.na(price_diff) & price_diff > 0) %>%
-  select(block, lot, price_diff, date_diff)
-```
-
-```{r}
-bayridge_appreciation <- property_value_growth %>%
-  filter(block >= 5749 & block <= 6143)
-
-bedstuy_appreciation <- property_value_growth %>%
-  filter(block >= 1578 & block <= 2022)
+  select(block, lot, neighborhood, price_diff, date_diff)
 ```
 
 ```{r}
@@ -250,6 +266,84 @@ ggplot(bedstuy_appreciation, aes(x = date_diff, y = price_diff)) +
   labs(title = "Bed-Stuy Property Appreciation", x = "Time Held", y = "Appreciation")+
   xlim(0, 31536000)+
   ylim(0, 1e+06)
+```
+```{r}
+ggplot(property_value_growth %>% filter(neighborhood == "WILLIAMSBURG-NORTH" | neighborhood == "WILLIAMSBURG-EAST"| neighborhood == "WILLIAMSBURG-CENTRAL" | neighborhood == "WILLIAMSBURG-SOUTH"), aes(x=date_diff, y = price_diff))+
+  geom_point()+
+  geom_smooth()+
+  labs(title = "Williamsburg Property Appreciation", x = "Time Held", y = "Appreciation")+
+  scale_y_continuous(limits = c(1e+03, 1e+07))+
+  xlim(0, 3e+08)
+```
+
+```{r}
+ggplot(property_value_growth %>% mutate(date_diff_days = date_diff / 86400), aes(x=date_diff_days))+
+  geom_density()+
+  labs(title = "Property Hold Times")+
+  xlab("Time Held (days)")+
+  ylab("Density")+
+  xlim(0, 365)
+```
+```{r}
+ggplot(property_value_growth %>% mutate(date_diff_days = date_diff / 86400), aes(x=date_diff_days))+
+  geom_histogram(binwidth = 90)+
+  facet_wrap(~neighborhood)+
+  labs(title = "Property Hold Times")+
+  xlab("Time Held (days)")+
+  ylab("Count")
+```
+```{r}
+property_value_growth_williamsburg <- property_value_growth %>% filter(neighborhood == "WILLIAMSBURG-NORTH" | neighborhood == "WILLIAMSBURG-EAST"| neighborhood == "WILLIAMSBURG-CENTRAL" | neighborhood == "WILLIAMSBURG-SOUTH")
+property_value_growth_fulton_ferry <- property_value_growth %>% filter(neighborhood == "DOWNTOWN-FULTON FERRY")
+```
+
+```{r}
+ggplot(property_value_growth_williamsburg %>% mutate(date_diff_days = date_diff / 86400), aes(x=date_diff_days))+
+  geom_histogram(binwidth = 90)+
+  facet_wrap(~neighborhood)+
+  labs(title = "Property Hold Times")+
+  xlab("Time Held (days)")+
+  ylab("Count")
+```
+```{r}
+ggplot(property_value_growth_fulton_ferry %>% mutate(date_diff_days = date_diff / 86400), aes(x=date_diff_days))+
+  geom_histogram(binwidth = 90)+
+  facet_wrap(~neighborhood)+
+  labs(title = "Property Hold Times")+
+  xlab("Time Held (days)")+
+  ylab("Count")
+```
+```{r}
+```
+```{r}
+ggplot(property_value_growth%>% filter(neighborhood != "BROOKLYN-UNKNOWN"), aes(x=date_diff))+
+  geom_histogram()+
+  facet_wrap(~neighborhood)
+```
+
+```{r}
+ggplot(property_sales_2013_2023_grouped %>% filter(neighborhood != "BROOKLYN-UNKNOWN" & neighborhood != "JAMAICA BAY" & neighborhood != "NAVY YARD"), aes(x=`sale date`))+
+  geom_density()+
+  facet_wrap(~neighborhood)
+```
+
+```{r}
+ggplot(property_value_growth %>% filter(neighborhood == "GREENPOINT" | neighborhood == "BEDFORD STUYVESANT") %>% mutate(date_diff_days = date_diff / 86400), aes(x=`date_diff_days`))+
+  geom_histogram(binwidth = 90)+
+  facet_wrap(~neighborhood)+
+  labs(title = "Property Hold Times", x = "Time Held (days)", y = "Sales Count")
+```
+
+```{r}
+ggplot(property_value_growth %>% filter(neighborhood == "GREENPOINT" | neighborhood == "BEDFORD STUYVESANT") %>% mutate(date_diff_days = date_diff / 86400) %>% filter(date_diff_days > 60), aes(x=`date_diff_days`, price_diff))+
+  geom_point()+
+  geom_smooth()+
+  facet_wrap(~neighborhood)+
+  labs(title = "Property Appreciation By Hold Time", x = "Time Held (days)", y = "Appreciation ($)")+
+  scale_y_continuous(trans='log10')
+```
+
+```{r}
 ```
 
 ```{r})

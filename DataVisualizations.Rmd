@@ -1,0 +1,26 @@
+---
+title: "DataVisualizations"
+author: "Grant Miner"
+date: "2024-04-29"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+ggplot(property_value_growth %>% filter(neighborhood == "GREENPOINT" | neighborhood == "BEDFORD STUYVESANT") %>% mutate(date_diff_days = date_diff / 86400) %>% filter(date_diff_days > 60), aes(x=`date_diff_days`, price_diff))+
+  geom_point()+
+  geom_smooth()+
+  facet_wrap(~neighborhood)+
+  labs(title = "Property Appreciation By Hold Time", x = "Time Held (days)", y = "Appreciation ($)")+
+  scale_y_continuous(trans='log10')
+```
+
+```{r}
+ggplot(property_value_growth %>% filter(neighborhood == "GREENPOINT" | neighborhood == "BEDFORD STUYVESANT") %>% mutate(date_diff_days = date_diff / 86400), aes(x=`date_diff_days`))+
+  geom_histogram(binwidth = 90)+
+  facet_wrap(~neighborhood)+
+  labs(title = "Property Hold Times", x = "Time Held (days)", y = "Sales Count")
+```

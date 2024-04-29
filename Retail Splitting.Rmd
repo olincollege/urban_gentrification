@@ -1,0 +1,27 @@
+---
+title: "Grant_Retail"
+author: "Grant Miner"
+date: "2024-03-31"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(tidycensus)
+library(sf)
+library(tmap)
+library(DT)
+```
+
+```{r}
+estab_change <- read_csv("Datasets/DeltaEstabCount_NYC1317.csv", show_col_types = FALSE)
+
+ggplot(estab_change, aes(x=Category, y=PercentageChange, fill=Status))+
+  geom_bar(position="dodge", stat="identity")+
+  labs(title="Retail Business Count by Area Classification (2013 vs 2017)", xlabel="Yelp Category", ylabel="Percentage (%)")+
+  scale_fill_discrete(name="Income Status", labels=c("Gentrifying", "Poor, Non-gentrifying", "Rich"))
+```
+
+

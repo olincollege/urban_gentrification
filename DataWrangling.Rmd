@@ -1,0 +1,100 @@
+---
+title: "RawData"
+author: "Grant Miner"
+date: "2024-04-25"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(sp)
+```
+
+
+```{r}
+property_sales_2023 <- read_excel(here("data", "SalesData/Brooklyn Sales 2023.xlsx"), sheet = "Brooklyn", skip = 6)
+property_sales_2022 <- read_excel(here("data", "SalesData/Brooklyn 2022 Sales.xlsx"), sheet = "Brooklyn", skip = 6)
+property_sales_2021 <- read_excel(here("data", "SalesData/Brooklyn 2021 Sales.xlsx"), sheet = "Brooklyn", skip = 6)
+property_sales_2020 <- read_excel(here("data", "SalesData/Brooklyn 2020 Sales.xlsx"), sheet = "Brooklyn", skip = 6)
+property_sales_2019 <- read_excel(here("data", "SalesData/Brooklyn 2019 Sales.xlsx"), sheet = "Brooklyn", skip = 4)
+property_sales_2018 <- read_excel(here("data", "SalesData/Brooklyn 2018 Sales.xlsx"), sheet = "Brooklyn", skip = 4)
+property_sales_2017 <- read_excel(here("data", "SalesData/Brooklyn 2017 Sales.xls"), sheet = "Brooklyn", skip = 4)
+property_sales_2016 <- read_excel(here("data", "SalesData/Brooklyn 2016 Sales.xls"), sheet = "Brooklyn", skip = 4)
+property_sales_2015 <- read_excel(here("data", "SalesData/Brooklyn 2015 Sales.xls"), sheet = "Brooklyn", skip = 4)
+property_sales_2014 <- read_excel(here("data", "SalesData/Brooklyn 2014 Sales.xls"), sheet = "Brooklyn", skip = 4)
+property_sales_2013 <- read_excel(here("data", "SalesData/Brooklyn 2013 Sales.xls"), sheet = "Brooklyn", skip = 4)
+```
+
+```{r}
+colnames(property_sales_2023) <- as.character(gsub("\\s+", " ", gsub(" $", "", gsub("[\r|\n]+", " ", tolower(colnames(property_sales_2023))))))
+colnames(property_sales_2022) <- as.character(gsub("\\s+", " ", gsub(" $", "", gsub("[\r|\n]+", " ", tolower(colnames(property_sales_2022))))))
+colnames(property_sales_2021) <- as.character(gsub("\\s+", " ", gsub(" $", "", gsub("[\r|\n]+", " ", tolower(colnames(property_sales_2021))))))
+colnames(property_sales_2020) <- as.character(gsub("\\s+", " ", gsub(" $", "", gsub("[\r|\n]+", " ", tolower(colnames(property_sales_2020))))))
+colnames(property_sales_2019) <- as.character(gsub("\\s+", " ", gsub(" $", "", gsub("[\r|\n]+", " ", tolower(colnames(property_sales_2019))))))
+colnames(property_sales_2018) <- as.character(gsub("\\s+", " ", gsub(" $", "", gsub("[\r|\n]+", " ", tolower(colnames(property_sales_2018))))))
+colnames(property_sales_2017) <- as.character(gsub("\\s+", " ", gsub(" $", "", gsub("[\r|\n]+", " ", tolower(colnames(property_sales_2017))))))
+colnames(property_sales_2016) <- as.character(gsub("\\s+", " ", gsub(" $", "", gsub("[\r|\n]+", " ", tolower(colnames(property_sales_2016))))))
+colnames(property_sales_2015) <- as.character(gsub("\\s+", " ", gsub(" $", "", gsub("[\r|\n]+", " ", tolower(colnames(property_sales_2015))))))
+colnames(property_sales_2014) <- as.character(gsub("\\s+", " ", gsub(" $", "", gsub("[\r|\n]+", " ", tolower(colnames(property_sales_2014))))))
+colnames(property_sales_2013) <- as.character(gsub("\\s+", " ", gsub(" $", "", gsub("[\r|\n]+", " ", tolower(colnames(property_sales_2013))))))
+```
+
+```{r}
+property_sales_2023 <- property_sales_2023 %>%
+  select(neighborhood, "building class category", block, lot, "ease-ment", address, "apartment number", "zip code", "residential units", "commercial units", "total units", "land square feet", "gross square feet", "year built", "building class at time of sale", "sale price", "sale date")
+
+property_sales_2022 <- property_sales_2022 %>%
+  select(neighborhood, "building class category", block, lot, "ease-ment", address, "apartment number", "zip code", "residential units", "commercial units", "total units", "land square feet", "gross square feet", "year built", "building class at time of sale", "sale price", "sale date")
+
+property_sales_2021 <- property_sales_2021 %>%
+  select(neighborhood, "building class category", block, lot, "ease-ment", address, "apartment number", "zip code", "residential units", "commercial units", "total units", "land square feet", "gross square feet", "year built", "building class at time of sale", "sale price", "sale date")
+
+property_sales_2020 <- property_sales_2020 %>%
+  select(neighborhood, "building class category", block, lot, "ease-ment", address, "apartment number", "zip code", "residential units", "commercial units", "total units", "land square feet", "gross square feet", "year built", "building class at time of sale", "sale price", "sale date")
+
+property_sales_2019 <- property_sales_2019 %>%
+  select(neighborhood, "building class category", block, lot, "ease-ment", address, "apartment number", "zip code", "residential units", "commercial units", "total units", "land square feet", "gross square feet", "year built", "building class at time of sale", "sale price", "sale date")
+
+property_sales_2018 <- property_sales_2018 %>%
+  select(neighborhood, "building class category", block, lot, "ease-ment", address, "apartment number", "zip code", "residential units", "commercial units", "total units", "land square feet", "gross square feet", "year built", "building class at time of sale", "sale price", "sale date")
+
+property_sales_2017 <- property_sales_2017 %>%
+  select(neighborhood, "building class category", block, lot, "ease-ment", address, "apartment number", "zip code", "residential units", "commercial units", "total units", "land square feet", "gross square feet", "year built", "building class at time of sale", "sale price", "sale date")
+
+property_sales_2016 <- property_sales_2016 %>%
+  select(neighborhood, "building class category", block, lot, "ease-ment", address, "apartment number", "zip code", "residential units", "commercial units", "total units", "land square feet", "gross square feet", "year built", "building class at time of sale", "sale price", "sale date")
+
+property_sales_2015 <- property_sales_2015 %>%
+  select(neighborhood, "building class category", block, lot, "ease-ment", address, "apartment number", "zip code", "residential units", "commercial units", "total units", "land square feet", "gross square feet", "year built", "building class at time of sale", "sale price", "sale date")
+
+property_sales_2014 <- property_sales_2014 %>%
+  select(neighborhood, "building class category", block, lot, "ease-ment", address, "apartment number", "zip code", "residential units", "commercial units", "total units", "land square feet", "gross square feet", "year built", "building class at time of sale", "sale price", "sale date")
+
+property_sales_2013 <- property_sales_2013 %>%
+  select(neighborhood, "building class category", block, lot, "ease-ment", address, "apartment number", "zip code", "residential units", "commercial units", "total units", "land square feet", "gross square feet", "year built", "building class at time of sale", "sale price", "sale date")
+```
+
+```{r}
+property_sales_2013_2023 <- bind_rows(property_sales_2013, property_sales_2014, property_sales_2015, property_sales_2016, property_sales_2017, property_sales_2018, property_sales_2019, property_sales_2020, property_sales_2021, property_sales_2022, property_sales_2023)
+```
+
+```{r}
+property_sales_2013_2023_grouped <- property_sales_2013_2023 %>%
+  filter(`sale price` > 0) %>%
+  group_by(block, lot)
+```
+
+```{r}
+property_value_growth <- property_sales_2013_2023_grouped %>%
+  filter(`sale price` > 1) %>%
+  arrange(block, lot, `sale date`) %>%
+  filter(n_distinct(`sale price`) > 1) %>%
+  select(block, lot, neighborhood, `sale price`, `sale date`) %>%
+  group_by(block, lot)%>%
+  mutate(price_diff = c(NA, diff(`sale price`))) %>%
+  mutate(date_diff = c(NA, diff(as.numeric(`sale date`)))) %>%
+  filter(!is.na(price_diff) & price_diff > 0) %>%
+  select(block, lot, neighborhood, price_diff, date_diff)
+```
+
