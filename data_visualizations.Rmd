@@ -19,6 +19,8 @@ library(ggmap)
 library(prettydoc)
 library(egg) 
 library(plotly)
+library(ggiraph)
+
 
 knitr::opts_chunk$set(tidy = FALSE, message=FALSE, cache.extra = packageVersion('tufte'))
 options(htmltools.dir.version = FALSE)
@@ -197,37 +199,22 @@ ggarrange(desert_map, white, black, latinx, asian,
 ```
 
 
-```{r message=FALSE, warning=FALSE}
-name_graph <- clean_data %>%
-  ggplot() +
-  geom_sf(aes(fill = NTAName), color = "#8f98aa") +
-  theme_minimal() +
-  ggtitle("Neighborhood Names")+ 
-  theme(axis.text = element_blank(),
-        panel.grid.major = element_line("transparent"),
-        plot.title = element_text(family="DIN Condensed", size = 10, face = "bold", hjust=.5),
-        legend.title = element_text(face="bold", family="DIN Condensed"), 
-        legend.position = "right" ,
-        legend.text = element_text(size = 6,face="bold", family="DIN Condensed"))
-
-name_graph
-```
 
 ```{r}
-# Convert sf object to data frame
-df <- st_sf(clean_data)
+gg <- ggplot(clean_data) +
+  geom_sf(fill = "antiquewhite") +
+  theme_minimal() +
+  ggtitle("Neighborhood Names") +
+  geom_sf_label_interactive(aes(label = NTAName, tooltip = NTAName),
+                            size = 1.5) + 
+  theme(panel.background = element_rect(fill = "aliceblue"),
+        axis.text = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks = element_blank(),
+        panel.grid.major = element_blank()) 
 
-# Create Plotly plot
-plot <- plot_ly(data = df, type = 'scatter', mode = 'markers', marker = list(size = 10), 
-                hoverinfo = 'text',
-                text = ~paste("Neighborhood: ", NTAName)) %>%
-  layout(title = "Neighborhood Names",
-         xaxis = list(title = ""),
-         yaxis = list(title = ""),
-         legend = list(title = "Neighborhood Names"))
-
-# Print the plot
-print(plot)
+girafe(ggobj = gg)
 ```
+
 
 
