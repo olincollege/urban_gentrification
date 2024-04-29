@@ -1,0 +1,178 @@
+---
+title: Urban Gentrification and transportation- data wrangling
+author: Antoinette Tan
+output:
+  rmdformats::downcute
+
+---
+
+This file contains the data wrangling needed to get data relating transportation to various demographics. Inpsiration from here: https://freddybarragan.netlify.app/media/bayes/bayes_final.html
+
+
+```{r setup, include=FALSE}
+library(tidycensus)
+library(sf)
+library(tidyverse)
+library(here)
+library(prettydoc)
+```
+
+# Census Data
+
+```{r message=FALSE, warning=FALSE}
+# Get census demographic data such as race and income level. 
+
+#census_api_key("be06ef4e79a388a876e38a114656a8ca5d50a55b", install = TRUE, overwrite=TRUE) #insert api key
+
+# Fetch census data from `tidycensus` package 
+
+census <- get_acs(state = "NY", 
+        county = "Kings County", 
+        geography = "tract", 
+        variables = c(medincome = "B19013_001", 
+                      total_pop1 = "B01003_001",
+                      median_rent = "B25031_001", 
+                      unemployed = "B23025_005", 
+                      latinx = "B03002_012", 
+                      white = "B03002_003", 
+                      black = "B03002_004", 
+                      native = "B03002_005",
+                      asian = "B03002_006",
+                      naturalized_citizen = "B05001_005",
+                      noncitizen ="B05001_006"),
+        year = 2022,
+        output = "wide",
+        survey = "acs5",
+        geometry = TRUE) %>% 
+        select(-c(NAME, ends_with("M"))) %>%
+        rename_at(vars(ends_with("E")), .funs = list(~str_sub(., end = -2)))
+
+```
+
+```{r message=FALSE, warning=FALSE}
+# source: https://data.cityofnewyork.us/City-Government/2020-Census-Tracts-to-2020-NTAs-and-CDTAs-Equivale/hm78-6dwm/about_data
+#  Get mapping of GEOID <--> NTACODE(nta_id) so I can summarize census by NTA neighborhoods
+nta_geo_id <- read_csv(here("Raw_Data", "census_to_nta.csv")) %>%
+  select(GEOID, NTACode, NTAName) %>% 
+  filter(substr(NTACode, 1, 2) == "BK") # filter for just brooklyn
+```
+
+```{r message=FALSE, warning=FALSE}
+# group by NTA neighborhood and summarize data for each neighborhood
+census_with_nta <- census %>%
+  merge(., nta_geo_id) %>%
+  mutate(NTACode = as.character(NTACode),
+         NTACode = ifelse(is.na(NTACode), "NA", NTACode)) %>%
+  group_by(NTACode, NTAName) %>%
+  summarize(geometry = st_union(geometry),
+            total_pop = sum(total_pop1),
+            mean_income = mean(medincome, na.rm = TRUE),
+            mean_rent = mean(median_rent, na.rm = TRUE),
+            latinx_count = sum(latinx),
+            white_count = sum(white),
+            black_count = sum(black),
+            native_count = sum(native),
+            asian_count = sum(asian),
+            naturalized_citizen_count = sum(naturalized_citizen),
+            noncitizen_count = sum(noncitizen),) %>%
+   filter(total_pop != 0) %>%
+   mutate(latinx_perc = latinx_count/total_pop,
+          white_perc = white_count/total_pop,
+          black_perc = black_count/total_pop,
+          native_perc = native_count/total_pop,
+          asian_perc = asian_count/total_pop,
+          naturalized_citizen_perc = naturalized_citizen_count/total_pop,
+          noncitizen_perc = noncitizen_count/total_pop) %>%
+  rename(nta_id = NTACode)
+```
+
+
+
+## Eviction and Transit Data
+
+
+### Eviction
+
+```{r message=FALSE, warning=FALSE}
+# source: https://data.cityofnewyork.us/City-Government/Evictions/6z8x-wfk4
+evictions <- read_csv(here("Raw_Data/", "Evictions_20240422.csv")) %>% 
+  drop_na(Longitude) %>%
+  drop_na(Latitude) %>%
+  filter(BOROUGH == "BROOKLYN") %>% 
+  select(-BOROUGH) %>% 
+  st_as_sf(coords = c("Longitude", "Latitude"), crs = 4269)
+
+```
+
+### Transit
+
+
+```{r message=FALSE, warning=FALSE}
+# source: https://data.ny.gov/Transportation/MTA-Subway-Stations/39hk-dx4f/about_data
+
+transit_points <- read_csv(here("Raw_Data/","MTA_Subway_Stations_20240426.csv"))%>%
+  filter(Borough == "Bk") %>% 
+  select(c("Stop Name", "Georeference" )) %>% 
+  separate(Georeference, into=c("Point", "longitude", "latitude"), " ") %>%
+  mutate(latitude = str_remove_all(latitude, "[)]"),
+         longitude = str_remove_all(longitude, "[()]"),
+         ) %>%
+  select(-c(Point)) %>% 
+  mutate(latitude = as.numeric(latitude),
+         longitude = as.numeric(longitude)) %>%
+  st_as_sf(coords = c("longitude", "latitude"), crs = 4269)
+
+```
+
+# Join Data
+## Combine all data by geography and NTA neighborhood
+
+```{r message=FALSE, warning=FALSE}
+nyc_evictions_join <- st_join(census_with_nta, evictions)%>%
+  group_by(nta_id) %>%
+  summarize(eviction_count=n())
+
+nyc_ridership_join <- st_join(census_with_nta, transit_points) %>%
+  group_by(nta_id) %>%
+  summarize(sub_count = n()) %>% 
+  st_drop_geometry() 
+
+Other_demographic_combined <- as.data.frame(nyc_evictions_join) %>%
+  left_join(., (as.data.frame(nyc_ridership_join)), by= c("nta_id")) %>% 
+  select(-geometry)
+
+clean_data <- inner_join(census_with_nta, Other_demographic_combined, by = "nta_id")
+
+```
+
+# Write data to shapefile and CSV
+
+```{r message=FALSE, warning=FALSE}
+# prepare data to be written
+clean_data <- ungroup(clean_data) %>%
+  relocate( geometry, .after = last_col()) 
+```
+
+```{r message=FALSE, warning=FALSE}
+# write to CSV
+write_csv(clean_data, here("Clean_Data", "clean_data_csv.csv"))
+```
+
+```{r message=FALSE, warning=FALSE}
+# write to shapefile
+
+# rename columns because can't have field names greater than 10 for shp files
+
+clean_data_renamed  <- clean_data%>% 
+  rename(nat_cit_c = naturalized_citizen_count) %>% 
+  rename(non_c = noncitizen_count) %>% 
+  rename(nat_cit_p = naturalized_citizen_perc) %>% 
+  rename(non_p = noncitizen_perc)
+
+  
+write_sf(clean_data_renamed, here("Clean_Data", "clean_data_shp.shp"))
+write_sf(transit_points, "Clean_Data/transit_points.shp")
+
+```
+
+

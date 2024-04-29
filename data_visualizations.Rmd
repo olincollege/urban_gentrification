@@ -1,0 +1,233 @@
+---
+title: Urban Gentrification and transportation- data visualizations
+author: Antoinette Tan
+output:
+  rmdformats::downcute
+
+---
+
+Inspiration from here: https://freddybarragan.netlify.app/media/bayes/bayes_final.html
+
+
+```{r setup, include=FALSE}
+library(tidycensus)
+library(sf)
+library(tidyverse)
+library(here)
+library(ggplot2)
+library(ggmap)
+library(prettydoc)
+library(egg) 
+library(plotly)
+
+knitr::opts_chunk$set(tidy = FALSE, message=FALSE, cache.extra = packageVersion('tufte'))
+options(htmltools.dir.version = FALSE)
+```
+
+
+```{r message=FALSE, warning=FALSE}
+#  Read CSV File
+csv_clean_data <- read_csv(here("Clean_Data", "clean_data_csv.csv"))
+#  Read Shape File
+clean_data <- st_read(here("Clean_Data", "clean_data_shp.shp"))
+#  Replace Column abbr Names in Shape File with full name from CSV
+colnames(clean_data) <- colnames(csv_clean_data)
+
+
+transit_points <- st_read(here("Clean_Data", "transit_points.shp"))
+```
+
+
+```{r message=FALSE, warning=FALSE}
+ggplot(transit_points) +
+    geom_sf() +
+    scale_fill_gradient(low = "#FCF5EE", high = "#E13728", guide = guide_legend(title = "Staten Island Population")) +
+    theme_minimal() +
+    theme(panel.grid.major = element_line("transparent"),
+          axis.text = element_blank()) +
+    ggtitle(" Population")+ 
+      theme(panel.grid.major = element_line("transparent"),
+            plot.title = element_text(size = 13, face = "bold"),
+            legend.title = element_text(size = 8), 
+            legend.text = element_text(size = 8)) + 
+      guides(shape = guide_legend(override.aes = list(size = 4)),
+             color = guide_legend(override.aes = list(size = 4)))
+
+```
+
+
+```{r, fig.height=8*4, fig.width=8*2, message=FALSE, waring=FALSE}
+desert_map <- clean_data %>%
+  ggplot() +
+  geom_sf(aes(fill = sub_count), color = "#8f98aa") +
+  scale_fill_gradientn(colors=c("#FCF5EE","#b5cbcf","#55717b","#0a4260"), na.value="#D6D6D6") +
+  # https://www.color-hex.com/color-palette/100132
+  theme_minimal() +
+  ggtitle("Subway Count \nby Neighborhood")+ 
+  theme(axis.text = element_blank(),
+        panel.grid.major = element_line("transparent"),
+        plot.title = element_text(family="DIN Condensed", size = 40, face = "bold", hjust=.5),
+        legend.key.width = unit(.5, "in"),
+        legend.title = element_text(size = 25, face="bold", family="DIN Condensed"), 
+        legend.position = "bottom" ,
+        legend.text = element_text(size = 20, face="bold", family="DIN Condensed"))+
+  guides(fill = guide_colourbar(title = "Number of Subway Stations", title.position="top", title.hjust = 0.5))
+
+rent_map <- clean_data %>%
+  ggplot() +
+  geom_sf(aes(fill = mean_rent), color = "#8f98aa") +
+  scale_fill_gradientn(colors = c("#FCF5EE","#beafc2", "#8155ba", "#695e93")) +
+  # https://www.color-hex.com/color-palette/1044873
+  theme_minimal() +
+  ggtitle("Mean Rent \nby Neighborhood")+ 
+  theme(axis.text = element_blank(),
+        panel.grid.major = element_line("transparent"),
+        plot.title = element_text(family="DIN Condensed", size = 40, face = "bold", hjust=.5),
+        legend.key.width = unit(.5, "in"),
+        legend.title = element_text(size = 25, face="bold", family="DIN Condensed"), 
+        legend.position = "bottom" ,
+        legend.text = element_text(size = 20, face="bold", family="DIN Condensed"))+
+    guides(fill = guide_colourbar(title = "Dollars", title.position="top", title.hjust = 0.5))
+
+evict <- clean_data %>%
+  ggplot() +
+  geom_sf(aes(fill = eviction_count), color = "#8f98aa")+
+  scale_fill_gradientn(colors = c("#FCF5EE", "#cce2cb", "#b6cfb6","#97c1a9")) +
+  # https://www.color-hex.com/color-palette/1044832
+  theme_minimal() +
+  ggtitle("Eviction Counts \nby Neighborhood")+ 
+  theme(axis.text = element_blank(),
+        panel.grid.major = element_line("transparent"),
+        plot.title = element_text(family="DIN Condensed", size = 40, face = "bold", hjust=.5),
+        legend.key.width = unit(.5, "in"),
+        legend.title = element_text(size = 25, face="bold", family="DIN Condensed"), 
+        legend.position = "bottom" ,
+        legend.text = element_text(size = 20, face="bold", family="DIN Condensed"))+
+  guides(fill = guide_colourbar(title = "Number of Evictions", title.position="top", title.hjust = 0.5))
+
+noncit <- clean_data %>%
+  ggplot() +
+  geom_sf(aes(fill = noncitizen_perc), color = "#8f98aa") +
+  scale_fill_gradientn(colors = c("#FCF5EE","#ead1dc", "#d5a6bd", "#c27ba0")) +
+  # https://www.color-hex.com/color-palette/1044826
+  theme_minimal() +
+  ggtitle("Immigrant Density \nby Neighborhood")+ 
+  theme(axis.text = element_blank(),
+        panel.grid.major = element_line("transparent"),
+        plot.title = element_text(family="DIN Condensed", size = 40, face = "bold", hjust=.5),
+        legend.key.width = unit(.5, "in"),
+        legend.title = element_text(size = 25, face="bold", family="DIN Condensed"), 
+        legend.position = "bottom" ,
+        legend.text = element_text(size = 20, face="bold", family="DIN Condensed"))+
+  guides(fill = guide_colourbar(title = "Percent Non-Citizen", title.position="top", title.hjust = 0.5))
+
+ggarrange(desert_map, rent_map,evict, noncit,
+          ncol=2, nrow=2, padding = unit(3,
+  "line"))
+
+```
+
+```{r message=FALSE, warning=FALSE}
+white <- clean_data %>%
+  ggplot() +
+  geom_sf(aes(fill = white_perc), color = "#8f98aa") +
+  scale_fill_gradientn(colors = c("#FCF5EE","#919BB6", "#5A6687", "#3D465C")) +
+  theme_minimal() +
+  ggtitle("White Population \nby Neighborhood")+ 
+  theme(axis.text = element_blank(),
+        panel.grid.major = element_line("transparent"),
+        plot.title = element_text(family="DIN Condensed", size = 40, face = "bold", hjust=.5),
+        legend.key.width = unit(.5, "in"),
+        legend.title = element_text(size = 25, face="bold", family="DIN Condensed"), 
+        legend.position = "bottom" ,
+        legend.text = element_text(size = 20, face="bold", family="DIN Condensed"))+
+    guides(fill = guide_colourbar(title = "Percent White", title.position="top", title.hjust = 0.5))
+
+black <- clean_data %>%
+  ggplot() +
+  geom_sf(aes(fill = black_perc), color = "#8f98aa") +
+  scale_fill_gradientn(colors = c("#FCF5EE","#F8ABA6", "#F58581", "#DB3F37")) +
+  theme_minimal() +
+  ggtitle("Black Population \nby Neighborhood")+ 
+  theme(axis.text = element_blank(),
+        panel.grid.major = element_line("transparent"),
+        plot.title = element_text(family="DIN Condensed", size = 40, face = "bold", hjust=.5),
+        legend.key.width = unit(.5, "in"),
+        legend.title = element_text(size = 25, face="bold", family="DIN Condensed"), 
+        legend.position = "bottom" ,
+        legend.text = element_text(size = 20, face="bold", family="DIN Condensed"))+
+    guides(fill = guide_colourbar(title = "Percent Black", title.position="top", title.hjust = 0.5))
+
+asian <- clean_data %>%
+  ggplot() +
+  geom_sf(aes(fill = asian_perc), color = "#8f98aa") +
+  scale_fill_gradientn(colors = c("#FCF5EE","#C1C5EC", "#A1A8E2", "#4451C5"),                      
+                       guide = guide_colourbar(title = "Percent Asian")) +
+  theme_minimal() +
+  ggtitle("Asian Population \nby Neighborhood")+ 
+  theme(axis.text = element_blank(),
+        panel.grid.major = element_line("transparent"),
+        plot.title = element_text(family="DIN Condensed", size = 40, face = "bold", hjust=.5),
+        legend.key.width = unit(.5, "in"),
+        legend.title = element_text(size = 25, face="bold", family="DIN Condensed"), 
+        legend.position = "bottom" ,
+        legend.text = element_text(size = 20, face="bold", family="DIN Condensed"))+
+    guides(fill = guide_colourbar(title = "Percent Asian", title.position="top", title.hjust = 0.5))
+
+latinx <- clean_data %>%
+  ggplot() +
+  geom_sf(aes(fill = latinx_perc), color = "#8f98aa")+
+  scale_fill_gradientn(colors = c("#FCF5EE","#F4E2B8", "#E9C572", "#E77E2F")) +
+  theme_minimal() +
+  ggtitle("Latinx Population \nby Neighborhood")+ 
+  theme(axis.text = element_blank(),
+        panel.grid.major = element_line("transparent"),
+        plot.title = element_text(family="DIN Condensed", size = 40, face = "bold", hjust=.5),
+        legend.key.width = unit(.5, "in"),
+        legend.title = element_text(size = 25, face="bold", family="DIN Condensed"), 
+        legend.position = "bottom" ,
+        legend.text = element_text(size = 20, face="bold", family="DIN Condensed"))+
+  guides(fill = guide_colourbar(title = "Percent Latinx", title.position="top", title.hjust = 0.5))
+```
+
+```{r, fig.height=8*4, fig.width=8*2, message=FALSE, warning=FALSE}
+ggarrange(desert_map, white, black, latinx, asian, 
+          ncol=3, nrow=2, padding = unit(3,
+  "line"))
+```
+
+
+```{r message=FALSE, warning=FALSE}
+name_graph <- clean_data %>%
+  ggplot() +
+  geom_sf(aes(fill = NTAName), color = "#8f98aa") +
+  theme_minimal() +
+  ggtitle("Neighborhood Names")+ 
+  theme(axis.text = element_blank(),
+        panel.grid.major = element_line("transparent"),
+        plot.title = element_text(family="DIN Condensed", size = 10, face = "bold", hjust=.5),
+        legend.title = element_text(face="bold", family="DIN Condensed"), 
+        legend.position = "right" ,
+        legend.text = element_text(size = 6,face="bold", family="DIN Condensed"))
+
+name_graph
+```
+
+```{r}
+# Convert sf object to data frame
+df <- st_sf(clean_data)
+
+# Create Plotly plot
+plot <- plot_ly(data = df, type = 'scatter', mode = 'markers', marker = list(size = 10), 
+                hoverinfo = 'text',
+                text = ~paste("Neighborhood: ", NTAName)) %>%
+  layout(title = "Neighborhood Names",
+         xaxis = list(title = ""),
+         yaxis = list(title = ""),
+         legend = list(title = "Neighborhood Names"))
+
+# Print the plot
+print(plot)
+```
+
+
