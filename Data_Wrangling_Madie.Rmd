@@ -20,8 +20,7 @@ knitr::opts_chunk$set(echo = TRUE)
 Addresses of Properties Qualified for 421a Tax Exemption
 [link](https://www.nyc.gov/site/finance/property/benefits-421a.page)
 ```{r}
-properties_421a_22_23 <- read_xlsx("/home/mtong1/Downloads/421a_2023_brooklyn.xlsx")
-
+properties_421a_22_23 <- read_xlsx("/home/mtong1/data-science/urban_gentrification/data/raw_data/421a_2023_brooklyn.xlsx")
 
 clean_prop <-
   properties_421a_22_23 %>%
@@ -33,7 +32,7 @@ clean_prop <-
 ```
 Number of Units Qualified for Tax Exemptions per Borough
 [link](https://furmancenter.org/files/publications/The_Role_of_421-a_Final.pdf)
-*This data frame was manually created using values taken from the above article in Figure (BLANK) on page (BLANK).*
+*This data frame was manually created using values taken from the above article in Table 2 on page 10.*
 ```{r}
 residential_developments = data.frame(
   tax_type = c("421a", "421a","421a","421a","421a","420c", "420c", "420c", "420c", "420c", "other", "other", "other", "other", "other", "none reported", "none reported", "none reported", "none reported", "none reported"),
@@ -46,7 +45,7 @@ residential_developments = data.frame(
 Total Low Income Units 
 [link](https://furmancenter.org/neighborhoods/view/brooklyn)
 ```{r}
-borough_low_income_units <- read_csv("/home/mtong1/Downloads/focus_databrooklyn.csv", show_col_types = FALSE)
+borough_low_income_units <- read_csv("/home/mtong1/data-science/urban_gentrification/data/raw_data/focus_databrooklyn.csv", show_col_types = FALSE)
 spec(borough_low_income_units)
 
 
@@ -65,8 +64,6 @@ borough_low_income_units <-
          mi_mod_units = as.double(gsub(",","", mi_mod_units)),
          market_rate_units = as.double(gsub(",","", market_rate_units)),
          unknown_units = as.double(gsub(",","", unknown_units)))
-  # write.csv("/home/mtong1/data-science/urban_gentrification/data/borough_low_income_units_2010_2020.csv", row.names=FALSE)
-  
 
 
 summed_borough_units <- 
@@ -99,13 +96,11 @@ units_low_income_421a <- merge(summed_borough_units, residential_developments, b
   select(!income_type) %>%
   pivot_longer(!borough, names_to = "unit_type", values_to = "value") %>%
   mutate(unit_type = recode(unit_type, total="Total Low Income Units", units_421a = "Total 421a Exempt Units"))
-  # write.csv("/home/mtong1/data-science/urban_gentrification/data/units_low_income_421a.csv", row.names = FALSE)
 ```
 Median Gross Rent 
 [link](https://furmancenter.org/neighborhoods/view/brooklyn)
 ```{r}
-median_rent <- read_csv("/home/mtong1/Downloads/median_rent_data.csv")
-
+median_rent <- read_csv("/home/mtong1/data-science/urban_gentrification/data/raw_data/median_rent_data.csv")
 
 borough_median_rent <-
   median_rent %>%
@@ -129,4 +124,37 @@ brooklyn_median_rent <-
   pivot_longer(!Name, names_to = "year", values_to = "rent") %>%
   mutate(rent=gsub("\\$", "", rent)) %>%
   mutate(rent=as.double(gsub(",", "", rent)))
+```
+Linear Model of Median Rent Increase from 2006-2021 vs 421a Qualified Units in CD's of Brooklyn 
+[link](https://app.coredata.nyc/?mlb=false&ntii=shd_421a_units&ntr=Community%20District&mz=14&vtl=https%3A%2F%2Fthefurmancenter.carto.com%2Fu%2Fnyufc%2Fapi%2Fv2%2Fviz%2F98d1f16e-95fd-4e52-a2b1-b7abaf634828%2Fviz.json&mln=true&mlp=true&mlat=40.718&nty=2022&mb=roadmap&pf=%7B%22subsidies%22%3Atrue%7D&md=table&mlv=false&mlng=-73.996&btl=Borough&atp=neighborhoods)
+```{r}
+# making a dataset with just borough CD number and CD name 
+num_CD_names <- 
+  median_rent %>% 
+  select(Geography, Name) %>%
+  separate(col=Geography, into=c("borough", "borough_num"), sep=" ") %>%
+  filter(!is.na(borough_num), borough == "BK") %>%
+  select(!borough) %>%
+  mutate(borough_num = as.double(borough_num))
+
+# number of 421a qualified units per CD of Brooklyn 
+CD_421a <- read_csv("/home/mtong1/data-science/urban_gentrification/data/raw_data/communitydistrict-421-ataxexemptionunits.csv") %>%
+# filtering for Brooklyn 
+  separate(col="Community District", into = c("Borough", "borough_num"), sep=" ") %>%
+  filter(Borough=="BK") %>%
+  mutate(borough_num = as.double(borough_num)) %>%
+# joining together Community District names since it's not included in the original dataset 
+  left_join(num_CD_names, by=c("borough_num")) %>%
+  select(-c(short_name, long_name, Borough)) %>%
+  rename(unit_nums = "2022")
+
+diff_median_rent <- 
+  brooklyn_median_rent %>%
+  filter(year == c(2006, 2021)) %>%
+  pivot_wider(names_from = "year", values_from = "rent") %>%
+# calculating median rent increase by taking difference of starting year to ending year 
+  mutate(diff = `2021` - `2006`) %>%
+  select(-c(`2021`, `2006`)) %>%
+# adding numbers of 421a qualified units by Community District name 
+  left_join(CD_421a, by="Name")
 ```
