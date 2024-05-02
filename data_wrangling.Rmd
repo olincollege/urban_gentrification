@@ -155,7 +155,7 @@ clean_data <- ungroup(clean_data) %>%
 
 ```{r message=FALSE, warning=FALSE}
 # write to CSV
-write_csv(clean_data, here("Clean_Data", "clean_data_csv.csv"))
+write_csv(clean_data, here("Clean_Data", "transportation_clean_data_csv.csv"))
 ```
 
 ```{r message=FALSE, warning=FALSE}
@@ -170,7 +170,7 @@ clean_data_renamed  <- clean_data%>%
   rename(non_p = noncitizen_perc)
 
   
-write_sf(clean_data_renamed, here("Clean_Data", "clean_data_shp.shp"))
+write_sf(clean_data_renamed, here("Clean_Data", "transportation_clean_data_shp.shp"))
 write_sf(transit_points, "Clean_Data/transit_points.shp")
 
 ```

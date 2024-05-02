@@ -29,11 +29,11 @@ options(htmltools.dir.version = FALSE)
 
 ```{r message=FALSE, warning=FALSE}
 #  Read CSV File
-csv_clean_data <- read_csv(here("Clean_Data", "clean_data_csv.csv"))
+csv_clean_data <- read_csv(here("Clean_Data", "transportation_clean_data_csv.csv"))
 #  Read Shape File
-clean_data <- st_read(here("Clean_Data", "clean_data_shp.shp"))
+transportation_clean_data <- st_read(here("Clean_Data", "transportation_clean_data_shp.shp"))
 #  Replace Column abbr Names in Shape File with full name from CSV
-colnames(clean_data) <- colnames(csv_clean_data)
+colnames(transportation_clean_data) <- colnames(csv_clean_data)
 
 
 transit_points <- st_read(here("Clean_Data", "transit_points.shp"))
@@ -58,7 +58,7 @@ transit_point_map
 
 
 ```{r message=FALSE, warning=FALSE, fig.height=8*4, fig.width=8*2}
-subway_map <- clean_data %>%
+subway_map <- transportation_clean_data %>%
   ggplot() +
   geom_sf(aes(fill = sub_count), color = "#8f98aa") +
   geom_sf(data = transit_points, size = 1.5) +
@@ -75,7 +75,7 @@ subway_map <- clean_data %>%
         legend.text = element_text(size = 20, face="bold", family="DIN Condensed"))+
   guides(fill = guide_colourbar(title = "Number of Subway Stations", title.position="top", title.hjust = 0.5))
 
-rent_map <- clean_data %>%
+rent_map <- transportation_clean_data %>%
   ggplot() +
   geom_sf(aes(fill = mean_rent), color = "#8f98aa") +
   geom_sf(data = transit_points, size = 1.5) +
@@ -92,7 +92,7 @@ rent_map <- clean_data %>%
         legend.text = element_text(size = 20, face="bold", family="DIN Condensed"))+
     guides(fill = guide_colourbar(title = "Dollars", title.position="top", title.hjust = 0.5))
 
-evict <- clean_data %>%
+evict <- transportation_clean_data %>%
   ggplot() +
   geom_sf(aes(fill = eviction_count), color = "#8f98aa")+
   geom_sf(data = transit_points, size = 1.5) +
@@ -109,7 +109,7 @@ evict <- clean_data %>%
         legend.text = element_text(size = 20, face="bold", family="DIN Condensed"))+
   guides(fill = guide_colourbar(title = "Number of Evictions", title.position="top", title.hjust = 0.5))
 
-noncit <- clean_data %>%
+noncit <- transportation_clean_data %>%
   ggplot() +
   geom_sf(aes(fill = noncitizen_perc), color = "#8f98aa") +
   geom_sf(data = transit_points, size = 1.5) +
@@ -132,7 +132,7 @@ ggarrange(subway_map, rent_map,evict, noncit,
 
 ```
 ```{r message=FALSE, warning=FALSE}
-white <- clean_data %>%
+white <- transportation_clean_data %>%
   ggplot() +
   geom_sf(aes(fill = white_perc), color = "#8f98aa") +
   geom_sf(data = transit_points, size = 1.5) +
@@ -148,7 +148,7 @@ white <- clean_data %>%
         legend.text = element_text(size = 20, face="bold", family="DIN Condensed"))+
     guides(fill = guide_colourbar(title = "Percent White", title.position="top", title.hjust = 0.5))
 
-black <- clean_data %>%
+black <- transportation_clean_data %>%
   ggplot() +
   geom_sf(aes(fill = black_perc), color = "#8f98aa") +
   geom_sf(data = transit_points, size = 1.5) +
@@ -164,7 +164,7 @@ black <- clean_data %>%
         legend.text = element_text(size = 20, face="bold", family="DIN Condensed"))+
     guides(fill = guide_colourbar(title = "Percent Black", title.position="top", title.hjust = 0.5))
 
-asian <- clean_data %>%
+asian <- transportation_clean_data %>%
   ggplot() +
   geom_sf(aes(fill = asian_perc), color = "#8f98aa") +
   geom_sf(data = transit_points, size = 1.5) +
@@ -181,7 +181,7 @@ asian <- clean_data %>%
         legend.text = element_text(size = 20, face="bold", family="DIN Condensed"))+
     guides(fill = guide_colourbar(title = "Percent Asian", title.position="top", title.hjust = 0.5))
 
-latinx <- clean_data %>%
+latinx <- transportation_clean_data %>%
   ggplot() +
   geom_sf(aes(fill = latinx_perc), color = "#8f98aa")+
   geom_sf(data = transit_points, size = 1.5) +
@@ -207,7 +207,7 @@ ggarrange(subway_map, white, black, latinx, asian,
 
 
 ```{r message=FALSE, warning=FALSE}
-gg <- ggplot(clean_data) +
+gg <- ggplot(transportation_clean_data) +
   geom_sf(fill = "antiquewhite") +
   theme_minimal() +
   ggtitle("Neighborhood Names") +
