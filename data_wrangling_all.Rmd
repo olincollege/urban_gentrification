@@ -186,7 +186,7 @@ write_sf(transit_points, here("data", "clean_data", "clean_data_ant", "transit_p
 
 Addresses of Properties Qualified for 421a Tax Exemption
 [link](https://www.nyc.gov/site/finance/property/benefits-421a.page)
-```{r}
+```{r message=FALSE, warning=FALSE}
 properties_421a_22_23 <- read_xlsx(here("data", "raw_data", "raw_data_madie","421a_2023_brooklyn.xlsx"))
 
 clean_prop <-
@@ -200,7 +200,7 @@ clean_prop <-
 Number of Units Qualified for Tax Exemptions per Borough
 [link](https://furmancenter.org/files/publications/The_Role_of_421-a_Final.pdf)
 *This data frame was manually created using values taken from the above article in Table 2 on page 10.*
-```{r}
+```{r message=FALSE, warning=FALSE}
 residential_developments = data.frame(
   tax_type = c("421a", "421a","421a","421a","421a","420c", "420c", "420c", "420c", "420c", "other", "other", "other", "other", "other", "none reported", "none reported", "none reported", "none reported", "none reported"),
   borough = c("bronx", "brooklyn", "manhattan", "queens", "staten_island","bronx", "brooklyn", "manhattan", "queens", "staten_island","bronx", "brooklyn", "manhattan", "queens", "staten_island","bronx", "brooklyn", "manhattan", "queens", "staten_island"),
@@ -211,7 +211,7 @@ residential_developments = data.frame(
 ```
 Total Low Income Units 
 [link](https://furmancenter.org/neighborhoods/view/brooklyn)
-```{r}
+```{r message=FALSE, warning=FALSE}
 borough_low_income_units <- read_csv(here("data", "raw_data", "raw_data_madie", "focus_databrooklyn.csv"), show_col_types = FALSE)
 spec(borough_low_income_units)
 
@@ -267,7 +267,7 @@ units_low_income_421a <- merge(summed_borough_units, residential_developments, b
 ```
 Median Gross Rent 
 [link](https://furmancenter.org/neighborhoods/view/brooklyn)
-```{r}
+```{r message=FALSE, warning=FALSE}
 median_rent <- read_csv(here("data", "raw_data", "raw_data_madie", "median_rent_data.csv"))
 
 borough_median_rent <-
@@ -295,7 +295,7 @@ brooklyn_median_rent <-
 ```
 Linear Model of Median Rent Increase from 2006-2021 vs 421a Qualified Units in CD's of Brooklyn 
 [link](https://app.coredata.nyc/?mlb=false&ntii=shd_421a_units&ntr=Community%20District&mz=14&vtl=https%3A%2F%2Fthefurmancenter.carto.com%2Fu%2Fnyufc%2Fapi%2Fv2%2Fviz%2F98d1f16e-95fd-4e52-a2b1-b7abaf634828%2Fviz.json&mln=true&mlp=true&mlat=40.718&nty=2022&mb=roadmap&pf=%7B%22subsidies%22%3Atrue%7D&md=table&mlv=false&mlng=-73.996&btl=Borough&atp=neighborhoods)
-```{r}
+```{r message=FALSE, warning=FALSE}
 # making a dataset with just borough CD number and CD name 
 num_CD_names <- 
   median_rent %>% 
@@ -328,7 +328,7 @@ diff_median_rent <-
 
 ```
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 # write to cvs
 
 write_csv(residential_developments, here("data", "clean_data", "clean_data_madie", "residential_developments.csv"))
@@ -354,7 +354,7 @@ This dataset contains measures of metrics considered to be indexes of gentrifica
 
 ### Data Wrangling
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 load(here("data", "raw_data", "raw_data_merwan", "Data_NYC_Gentrification_2000_16.RData"))
 counties <- data.frame("Borough"= c("Bronx", "Brooklyn", "Manhattan", "Queens", "Staten Island"),
                        "Borough_Code"=c("36005", "36047", "36061", "36081", "36085"))
@@ -386,7 +386,7 @@ conversion is prevalent.
 
 ### Data Wrangling
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 housing <- read_csv(here("data", "raw_data", "raw_data_merwan","HousingDB_post2010.csv"))
 housing <- housing %>% 
   mutate("Borough_Code"=substring(housing$CenTract20, 0, 5)) %>% 
@@ -401,7 +401,7 @@ housing <- housing[!is.na(housing$Ownership),]
 housing <- housing[!is.na(housing$`Ownership Abbrev`),]
 ```
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 # write to csv
 
 write_csv(x, here("data", "clean_data", "clean_data_merwan", "NYC_Gentrification_2000_16_clean.csv"))
@@ -411,7 +411,7 @@ write_csv(housing, here("data", "clean_data", "clean_data_merwan", "HousingDB_po
 # Cara Data Wrangling
 
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 # Read gentrification level excel file
 geoid_gent <- read_excel(here("data", "raw_data", "raw_data_cara", "udp_ny_final_typology_jan_2019.xlsx"))
 
@@ -437,7 +437,7 @@ bk_gent_levels$wkt_multipolygon <- sapply(bk_gent_levels$geometry, function(mp) 
 })
 ```
 
-```{r fig.width=40 fig.height=30}
+```{r fig.width=40, fig.height=30}
 # Read redlining csv file separating districts into hazardous or declining
 redlining <- read_csv(here("data", "raw_data", "raw_data_cara", "redlining.csv"), show_col_types = FALSE)
 
@@ -449,7 +449,7 @@ redlining_long <- pivot_longer(redlining, `Percent labeled Declining`:`Percent l
 redlining_long$Percent_value_label <- paste0(sprintf("%.1f", redlining_long$Percent_value), "%")
 ```
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 # Read csv file of nyc public housing developments
 public_dev <- read_csv(here("data", "raw_data", "raw_data_cara", "NYCHA_Public_Housing_Developments.csv"), show_col_types = FALSE)
 
@@ -477,7 +477,7 @@ write_csv(public_dev, here("data", "clean_data", "clean_data_cara","bk_public_de
 
 # Grant Data Wrangling
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 property_sales_2023 <- read_excel(here("data", "raw_data", "raw_data_grant", "Brooklyn Sales 2023.xlsx"), sheet = "Brooklyn", skip = 6)
 property_sales_2022 <- read_excel(here("data", "raw_data", "raw_data_grant", "Brooklyn 2022 Sales.xlsx"), sheet = "Brooklyn", skip = 6)
 property_sales_2021 <- read_excel(here("data", "raw_data", "raw_data_grant", "Brooklyn 2021 Sales.xlsx"), sheet = "Brooklyn", skip = 6)
@@ -491,7 +491,7 @@ property_sales_2014 <- read_excel(here("data", "raw_data", "raw_data_grant", "Br
 property_sales_2013 <- read_excel(here("data", "raw_data", "raw_data_grant", "Brooklyn 2013 Sales.xls"), sheet = "Brooklyn", skip = 4)
 ```
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 colnames(property_sales_2023) <- as.character(gsub("\\s+", " ", gsub(" $", "", gsub("[\r|\n]+", " ", tolower(colnames(property_sales_2023))))))
 colnames(property_sales_2022) <- as.character(gsub("\\s+", " ", gsub(" $", "", gsub("[\r|\n]+", " ", tolower(colnames(property_sales_2022))))))
 colnames(property_sales_2021) <- as.character(gsub("\\s+", " ", gsub(" $", "", gsub("[\r|\n]+", " ", tolower(colnames(property_sales_2021))))))
@@ -505,7 +505,7 @@ colnames(property_sales_2014) <- as.character(gsub("\\s+", " ", gsub(" $", "", g
 colnames(property_sales_2013) <- as.character(gsub("\\s+", " ", gsub(" $", "", gsub("[\r|\n]+", " ", tolower(colnames(property_sales_2013))))))
 ```
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 property_sales_2023 <- property_sales_2023 %>%
   select(neighborhood, "building class category", block, lot, "ease-ment", address, "apartment number", "zip code", "residential units", "commercial units", "total units", "land square feet", "gross square feet", "year built", "building class at time of sale", "sale price", "sale date")
 
@@ -540,17 +540,17 @@ property_sales_2013 <- property_sales_2013 %>%
   select(neighborhood, "building class category", block, lot, "ease-ment", address, "apartment number", "zip code", "residential units", "commercial units", "total units", "land square feet", "gross square feet", "year built", "building class at time of sale", "sale price", "sale date")
 ```
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 property_sales_2013_2023 <- bind_rows(property_sales_2013, property_sales_2014, property_sales_2015, property_sales_2016, property_sales_2017, property_sales_2018, property_sales_2019, property_sales_2020, property_sales_2021, property_sales_2022, property_sales_2023)
 ```
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 property_sales_2013_2023_grouped <- property_sales_2013_2023 %>%
   filter(`sale price` > 0) %>%
   group_by(block, lot)
 ```
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 property_value_growth <- property_sales_2013_2023_grouped %>%
   filter(`sale price` > 1) %>%
   arrange(block, lot, `sale date`) %>%
@@ -563,7 +563,7 @@ property_value_growth <- property_sales_2013_2023_grouped %>%
   select(block, lot, neighborhood, price_diff, date_diff)
 ```
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 # Write cleaned data csv file
 write_csv(property_value_growth, here("data", "clean_data", "clean_data_grant","property_value_growth.csv"))
 ```
