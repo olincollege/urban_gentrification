@@ -1,0 +1,37 @@
+boro_cd,BORO,Category,Percent,Percent_value,Percent_value_label
+Greenpoint and Williamsburg (CD1),BROOKLYN,Percent labeled Declining,0.0839,8.39,8.4%
+Greenpoint and Williamsburg (CD1),BROOKLYN,Percent labeled Hazardous,0.9159,91.59,91.6%
+Fort Greene and Brooklyn Heights (CD2),BROOKLYN,Percent labeled Declining,0.1676,16.76,16.8%
+Fort Greene and Brooklyn Heights (CD2),BROOKLYN,Percent labeled Hazardous,0.7376,73.76,73.8%
+Bedford Stuyvesant (CD3),BROOKLYN,Percent labeled Declining,0.0234,2.34,2.3%
+Bedford Stuyvesant (CD3),BROOKLYN,Percent labeled Hazardous,0.9766,97.66,97.7%
+Bushwick (CD4),BROOKLYN,Percent labeled Declining,0.4798,47.980000000000004,48.0%
+Bushwick (CD4),BROOKLYN,Percent labeled Hazardous,0.5218,52.18000000000001,52.2%
+East New York and Starrett City (CD5),BROOKLYN,Percent labeled Declining,0.2956,29.56,29.6%
+East New York and Starrett City (CD5),BROOKLYN,Percent labeled Hazardous,0.6768,67.67999999999999,67.7%
+Park Slope and Carroll Gardens (CD6),BROOKLYN,Percent labeled Declining,0.1937,19.37,19.4%
+Park Slope and Carroll Gardens (CD6),BROOKLYN,Percent labeled Hazardous,0.7203,72.03,72.0%
+Sunset Park (CD7),BROOKLYN,Percent labeled Declining,0.5594,55.94,55.9%
+Sunset Park (CD7),BROOKLYN,Percent labeled Hazardous,0.4408,44.080000000000005,44.1%
+Crown Heights and Prospect Heights (CD8),BROOKLYN,Percent labeled Declining,0.4658,46.58,46.6%
+Crown Heights and Prospect Heights (CD8),BROOKLYN,Percent labeled Hazardous,0.4418,44.18,44.2%
+South Crown Heights and Lefferts Gardens (CD9),BROOKLYN,Percent labeled Declining,0.2867,28.67,28.7%
+South Crown Heights and Lefferts Gardens (CD9),BROOKLYN,Percent labeled Hazardous,0,0,0.0%
+Bay Ridge and Dyker Heights (CD10),BROOKLYN,Percent labeled Declining,0.0885,8.85,8.8%
+Bay Ridge and Dyker Heights (CD10),BROOKLYN,Percent labeled Hazardous,0.084,8.4,8.4%
+Bensonhurst (CD11),BROOKLYN,Percent labeled Declining,0.734,73.4,73.4%
+Bensonhurst (CD11),BROOKLYN,Percent labeled Hazardous,0.0427,4.2700000000000005,4.3%
+Borough Park (CD12),BROOKLYN,Percent labeled Declining,0.7473,74.72999999999999,74.7%
+Borough Park (CD12),BROOKLYN,Percent labeled Hazardous,0.1542,15.42,15.4%
+Coney Island (CD13),BROOKLYN,Percent labeled Declining,0.3536,35.36,35.4%
+Coney Island (CD13),BROOKLYN,Percent labeled Hazardous,0.645,64.5,64.5%
+Flatbush and Midwood (CD14),BROOKLYN,Percent labeled Declining,0.2317,23.169999999999998,23.2%
+Flatbush and Midwood (CD14),BROOKLYN,Percent labeled Hazardous,0,0,0.0%
+Sheepshead Bay (CD15),BROOKLYN,Percent labeled Declining,0.4104,41.04,41.0%
+Sheepshead Bay (CD15),BROOKLYN,Percent labeled Hazardous,0.3451,34.510000000000005,34.5%
+Brownsville (CD16),BROOKLYN,Percent labeled Declining,0.2225,22.25,22.2%
+Brownsville (CD16),BROOKLYN,Percent labeled Hazardous,0.7775,77.75,77.8%
+East Flatbush (CD17),BROOKLYN,Percent labeled Declining,0.4078,40.78,40.8%
+East Flatbush (CD17),BROOKLYN,Percent labeled Hazardous,0,0,0.0%
+Flatlands and Canarsie (CD18),BROOKLYN,Percent labeled Declining,0.1799,17.990000000000002,18.0%
+Flatlands and Canarsie (CD18),BROOKLYN,Percent labeled Hazardous,0.43120000000000003,43.120000000000005,43.1%

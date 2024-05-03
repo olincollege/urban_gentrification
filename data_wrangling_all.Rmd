@@ -1,0 +1,570 @@
+---
+title: Urban Gentrification and transportation- data wrangling
+author: Antoinette Tan
+output:
+  rmdformats::downcute
+---
+
+
+```{r setup, include=FALSE}
+remotes::install_github("mfherman/nycgeo")
+library(nycgeo)
+library(tidycensus)
+library(sf)
+library(tidyverse)
+library(here)
+library(prettydoc)
+
+library(dplyr)
+library(stringr)
+library("readxl")
+```
+
+# Antoinette's Data Wrangling
+
+This section contains the data wrangling needed to get data relating transportation to various demographics. Inspiration from here: https://freddybarragan.netlify.app/media/bayes/bayes_final.html
+## Census Data
+
+```{r message=FALSE, warning=FALSE}
+# Get census demographic data such as race and income level. 
+
+#census_api_key("be06ef4e79a388a876e38a114656a8ca5d50a55b", install = TRUE, overwrite=TRUE) #insert api key
+
+# Fetch census data from `tidycensus` package 
+
+census <- get_acs(state = "NY", 
+        county = "Kings County", 
+        geography = "tract", 
+        variables = c(medincome = "B19013_001", 
+                      total_pop1 = "B01003_001",
+                      median_rent = "B25031_001", 
+                      unemployed = "B23025_005", 
+                      latinx = "B03002_012", 
+                      white = "B03002_003", 
+                      black = "B03002_004", 
+                      native = "B03002_005",
+                      asian = "B03002_006",
+                      naturalized_citizen = "B05001_005",
+                      noncitizen ="B05001_006"),
+        year = 2022,
+        output = "wide",
+        survey = "acs5",
+        geometry = TRUE) %>% 
+        select(-c(NAME, ends_with("M"))) %>%
+        rename_at(vars(ends_with("E")), .funs = list(~str_sub(., end = -2)))
+
+```
+
+```{r message=FALSE, warning=FALSE}
+# source: https://data.cityofnewyork.us/City-Government/2020-Census-Tracts-to-2020-NTAs-and-CDTAs-Equivale/hm78-6dwm/about_data
+#  Get mapping of GEOID <--> NTACODE(nta_id) so I can summarize census by NTA neighborhoods
+nta_geo_id <- read_csv(here("data", "raw_data", "raw_data_ant", "census_to_nta.csv")) %>%
+  select(GEOID, NTACode, NTAName) %>% 
+  filter(substr(NTACode, 1, 2) == "BK") # filter for just brooklyn
+```
+
+```{r message=FALSE, warning=FALSE}
+# group by NTA neighborhood and summarize data for each neighborhood
+census_with_nta <- census %>%
+  merge(., nta_geo_id) %>%
+  mutate(NTACode = as.character(NTACode),
+         NTACode = ifelse(is.na(NTACode), "NA", NTACode)) %>%
+  group_by(NTACode, NTAName) %>%
+  summarize(geometry = st_union(geometry),
+            total_pop = sum(total_pop1),
+            mean_income = mean(medincome, na.rm = TRUE),
+            mean_rent = mean(median_rent, na.rm = TRUE),
+            latinx_count = sum(latinx),
+            white_count = sum(white),
+            black_count = sum(black),
+            native_count = sum(native),
+            asian_count = sum(asian),
+            naturalized_citizen_count = sum(naturalized_citizen),
+            noncitizen_count = sum(noncitizen),) %>%
+   filter(total_pop != 0) %>%
+   mutate(latinx_perc = latinx_count/total_pop,
+          white_perc = white_count/total_pop,
+          black_perc = black_count/total_pop,
+          native_perc = native_count/total_pop,
+          asian_perc = asian_count/total_pop,
+          naturalized_citizen_perc = naturalized_citizen_count/total_pop,
+          noncitizen_perc = noncitizen_count/total_pop) %>%
+  rename(nta_id = NTACode)
+```
+
+
+
+## Eviction and Transit Data
+
+
+### Eviction
+
+```{r message=FALSE, warning=FALSE}
+# source: https://data.cityofnewyork.us/City-Government/Evictions/6z8x-wfk4
+evictions <- read_csv(here("data", "raw_data", "raw_data_ant", "Evictions_20240422.csv")) %>% 
+  drop_na(Longitude) %>%
+  drop_na(Latitude) %>%
+  filter(BOROUGH == "BROOKLYN") %>% 
+  select(-BOROUGH) %>% 
+  st_as_sf(coords = c("Longitude", "Latitude"), crs = 4269)
+
+```
+
+### Transit
+
+
+```{r message=FALSE, warning=FALSE}
+# source: https://data.ny.gov/Transportation/MTA-Subway-Stations/39hk-dx4f/about_data
+
+transit_points <- read_csv(here("data", "raw_data", "raw_data_ant","MTA_Subway_Stations_20240426.csv"))%>%
+  filter(Borough == "Bk") %>% 
+  select(c("Stop Name", "Georeference" )) %>% 
+  separate(Georeference, into=c("Point", "longitude", "latitude"), " ") %>%
+  mutate(latitude = str_remove_all(latitude, "[)]"),
+         longitude = str_remove_all(longitude, "[()]"),
+         ) %>%
+  select(-c(Point)) %>% 
+  mutate(latitude = as.numeric(latitude),
+         longitude = as.numeric(longitude)) %>%
+  st_as_sf(coords = c("longitude", "latitude"), crs = 4269)
+
+```
+
+## Join Data
+### Combine all data by geography and NTA neighborhood
+
+```{r message=FALSE, warning=FALSE}
+nyc_evictions_join <- st_join(census_with_nta, evictions)%>%
+  group_by(nta_id) %>%
+  summarize(eviction_count=n())
+
+nyc_ridership_join <- st_join(census_with_nta, transit_points) %>%
+  group_by(nta_id) %>%
+  summarize(sub_count = n()) %>% 
+  st_drop_geometry() 
+
+Other_demographic_combined <- as.data.frame(nyc_evictions_join) %>%
+  left_join(., (as.data.frame(nyc_ridership_join)), by= c("nta_id")) %>% 
+  select(-geometry)
+
+clean_data <- inner_join(census_with_nta, Other_demographic_combined, by = "nta_id")
+
+```
+
+## Write data to shapefile and CSV
+
+```{r message=FALSE, warning=FALSE}
+# prepare data to be written
+clean_data <- ungroup(clean_data) %>%
+  relocate( geometry, .after = last_col()) 
+```
+
+```{r message=FALSE, warning=FALSE}
+# write to CSV
+write_csv(clean_data, here("data", "clean_data", "clean_data_ant", "transportation_clean_data_csv.csv"))
+```
+
+```{r message=FALSE, warning=FALSE}
+# write to shapefile
+
+# rename columns because can't have field names greater than 10 for shp files
+
+clean_data_renamed  <- clean_data%>% 
+  rename(nat_cit_c = naturalized_citizen_count) %>% 
+  rename(non_c = noncitizen_count) %>% 
+  rename(nat_cit_p = naturalized_citizen_perc) %>% 
+  rename(non_p = noncitizen_perc)
+
+  
+write_sf(clean_data_renamed, here("data", "clean_data", "clean_data_ant", "transportation_clean_data_shp.shp"))
+write_sf(transit_points, here("data", "clean_data", "clean_data_ant", "transit_points.shp"))
+
+```
+
+# Madie's Data Wrangling
+
+
+Addresses of Properties Qualified for 421a Tax Exemption
+[link](https://www.nyc.gov/site/finance/property/benefits-421a.page)
+```{r}
+properties_421a_22_23 <- read_xlsx(here("data", "raw_data", "raw_data_madie","421a_2023_brooklyn.xlsx"))
+
+clean_prop <-
+  properties_421a_22_23 %>%
+  mutate(Address = str_to_title(Address)) %>%                                 # Converting addresses into better, parse-able format 
+  mutate(full_addy = paste(Address, ZIP_CODE, sep = ", Brooklyn, NY ")) %>%   # Completing each address and adding zip code
+  filter(YEAR_BUILT > 0) %>%                                                  # Filtering rows without proper years
+  distinct(YEAR_BUILT, full_addy, .keep_all = T) %>%                          # taking out rows with duplicate pairs of year and addresses
+  arrange(desc(YEAR_BUILT))
+```
+Number of Units Qualified for Tax Exemptions per Borough
+[link](https://furmancenter.org/files/publications/The_Role_of_421-a_Final.pdf)
+*This data frame was manually created using values taken from the above article in Table 2 on page 10.*
+```{r}
+residential_developments = data.frame(
+  tax_type = c("421a", "421a","421a","421a","421a","420c", "420c", "420c", "420c", "420c", "other", "other", "other", "other", "other", "none reported", "none reported", "none reported", "none reported", "none reported"),
+  borough = c("bronx", "brooklyn", "manhattan", "queens", "staten_island","bronx", "brooklyn", "manhattan", "queens", "staten_island","bronx", "brooklyn", "manhattan", "queens", "staten_island","bronx", "brooklyn", "manhattan", "queens", "staten_island"),
+  units = c(9216, 49654, 33791, 23573, 808, 15617, 6811, 3575, 3401, 292, 771, 2169, 1665, 2572, 140, 693, 7840, 7033, 2254, 30)
+)
+
+
+```
+Total Low Income Units 
+[link](https://furmancenter.org/neighborhoods/view/brooklyn)
+```{r}
+borough_low_income_units <- read_csv(here("data", "raw_data", "raw_data_madie", "focus_databrooklyn.csv"), show_col_types = FALSE)
+spec(borough_low_income_units)
+
+
+borough_low_income_units <- 
+  borough_low_income_units %>%
+# separating borough and borough number to write out boroughs in name 
+  separate(col=Geography, into = c("borough", "borough num"), sep=" ") %>%
+  mutate(borough = recode(borough, BX = 'Bronx', MN = "Manhattan", QN = "Queens", SI = "Staten Island", BK = "Brooklyn")) %>%
+# separating number of units per column from the percentage 
+  separate(col=market_rate_units, into = c("market_rate_units", "market_rate_units_percentage"), sep=" ") %>%
+  separate(col=mi_mod_units, into = c("mi_mod_units", "mi_mod_units_percentage"), sep=" ") %>%
+  separate(col=low_income_units, into = c("low_income_units", "low_income_units_percentage"), sep=" ") %>%
+  separate(col=unknown_units, into = c("unknown_units", "unknown_units_percentage"), sep=" ") %>%
+# taking out commas in unit numbers for parsing, converting to doubles for math operations 
+  mutate(low_income_units = as.double(gsub(",","",low_income_units)),
+         mi_mod_units = as.double(gsub(",","", mi_mod_units)),
+         market_rate_units = as.double(gsub(",","", market_rate_units)),
+         unknown_units = as.double(gsub(",","", unknown_units)))
+
+
+summed_borough_units <- 
+  borough_low_income_units %>%
+# summing over units per borough for each category of unit
+  group_by(borough)%>% 
+  mutate(total_low_income =sum(low_income_units),
+         total_mi_mod = sum(mi_mod_units),
+         total_market = sum(market_rate_units),
+         total_unknown = sum(unknown_units)) %>%
+# removing non-useful columns
+  select(borough, total_mi_mod, total_low_income, total_market, total_unknown) %>%
+# removing duplicate rows 
+  distinct(borough, total_mi_mod, total_low_income, total_market, total_unknown, .keep_all = T) %>%
+  pivot_longer(!borough, names_to = "income_type", values_to = "total")
+
+
+residential_developments <- 
+  residential_developments %>%
+  mutate(borough = gsub("_", " ", borough)) %>% # removing underscore from staten island values
+  mutate(borough = str_to_title(borough)) %>% # converting first letters to uppercase for ease of joining datasets
+  filter(tax_type == "421a")
+
+
+# joining two datasets
+units_low_income_421a <- merge(summed_borough_units, residential_developments, by=c("borough")) %>%
+  rename(units_421a = units) %>%
+  select(!tax_type) %>%
+  filter(income_type == "total_low_income") %>%
+  select(!income_type) %>%
+  pivot_longer(!borough, names_to = "unit_type", values_to = "value") %>%
+  mutate(unit_type = recode(unit_type, total="Total Low Income Units", units_421a = "Total 421a Exempt Units"))
+
+```
+Median Gross Rent 
+[link](https://furmancenter.org/neighborhoods/view/brooklyn)
+```{r}
+median_rent <- read_csv(here("data", "raw_data", "raw_data_madie", "median_rent_data.csv"))
+
+borough_median_rent <-
+  median_rent %>%
+  filter(Level == "Boro") %>%
+  select(!Geography) %>%
+  select(!Level) %>%
+  pivot_longer(!Name, names_to = "year", values_to = "value") %>%
+# removing $ and , from price value for parsing
+  mutate(value = gsub(",","", value)) %>%
+  mutate(value = gsub("\\$", "", value))
+
+
+brooklyn_median_rent <-
+  median_rent %>%
+# separating borough num and borough to select only brooklyn numbers
+  separate(col=Geography, into = c("borough", "borough_num"), sep=" ") %>%
+  filter(!is.na(borough_num), borough == "BK") %>%
+  select(!borough) %>%
+  select(!Level) %>%
+  select(!borough_num) %>%
+  pivot_longer(!Name, names_to = "year", values_to = "rent") %>%
+  mutate(rent=gsub("\\$", "", rent)) %>%
+  mutate(rent=as.double(gsub(",", "", rent))) 
+```
+Linear Model of Median Rent Increase from 2006-2021 vs 421a Qualified Units in CD's of Brooklyn 
+[link](https://app.coredata.nyc/?mlb=false&ntii=shd_421a_units&ntr=Community%20District&mz=14&vtl=https%3A%2F%2Fthefurmancenter.carto.com%2Fu%2Fnyufc%2Fapi%2Fv2%2Fviz%2F98d1f16e-95fd-4e52-a2b1-b7abaf634828%2Fviz.json&mln=true&mlp=true&mlat=40.718&nty=2022&mb=roadmap&pf=%7B%22subsidies%22%3Atrue%7D&md=table&mlv=false&mlng=-73.996&btl=Borough&atp=neighborhoods)
+```{r}
+# making a dataset with just borough CD number and CD name 
+num_CD_names <- 
+  median_rent %>% 
+  select(Geography, Name) %>%
+  separate(col=Geography, into=c("borough", "borough_num"), sep=" ") %>%
+  filter(!is.na(borough_num), borough == "BK") %>%
+  select(!borough) %>%
+  mutate(borough_num = as.double(borough_num))
+
+# number of 421a qualified units per CD of Brooklyn 
+CD_421a <- read_csv(here("data", "raw_data", "raw_data_madie", "communitydistrict-421-ataxexemptionunits.csv")) %>%
+# filtering for Brooklyn 
+  separate(col="Community District", into = c("Borough", "borough_num"), sep=" ") %>%
+  filter(Borough=="BK") %>%
+  mutate(borough_num = as.double(borough_num)) %>%
+# joining together Community District names since it's not included in the original dataset 
+  left_join(num_CD_names, by=c("borough_num")) %>%
+  select(-c(short_name, long_name, Borough)) %>%
+  rename(unit_nums = "2022")
+
+diff_median_rent <- 
+  brooklyn_median_rent %>%
+  filter(year == c(2006, 2021)) %>%
+  pivot_wider(names_from = "year", values_from = "rent") %>%
+# calculating median rent increase by taking difference of starting year to ending year 
+  mutate(diff = `2021` - `2006`) %>%
+  select(-c(`2021`, `2006`)) %>%
+# adding numbers of 421a qualified units by Community District name 
+  left_join(CD_421a, by="Name")
+
+```
+
+```{r}
+# write to cvs
+
+write_csv(residential_developments, here("data", "clean_data", "clean_data_madie", "residential_developments.csv"))
+
+write_csv(borough_low_income_units, here("data", "clean_data", "clean_data_madie", "borough_low_income_units_2010_2020.csv"))
+
+write_csv(units_low_income_421a, here("data", "clean_data", "clean_data_madie", "units_low_income_421a.csv"))
+
+write_csv(borough_median_rent, here("data", "clean_data", "clean_data_madie", "borough_median_rent.csv"))
+
+write_csv(brooklyn_median_rent, here("data", "clean_data", "clean_data_madie", "brooklyn_median_rent.csv"))
+
+write_csv(diff_median_rent, here("data", "clean_data", "clean_data_madie", "diff_median_rent.csv"))
+
+```
+
+# Merwan Data Wrangling
+
+## Gentrification Dataset
+[Data Source](https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/O56ZMB)
+This dataset contains measures of metrics considered to be indexes of gentrification in the years
+2000 and 2016. The data is separated by census tracts. 
+
+### Data Wrangling
+
+```{r}
+load(here("data", "raw_data", "raw_data_merwan", "Data_NYC_Gentrification_2000_16.RData"))
+counties <- data.frame("Borough"= c("Bronx", "Brooklyn", "Manhattan", "Queens", "Staten Island"),
+                       "Borough_Code"=c("36005", "36047", "36061", "36081", "36085"))
+x <- x %>% 
+  mutate("Borough_Code"=substring(x$tractid, 0, 5)) %>% 
+  inner_join(counties, by="Borough_Code")
+x$Borough <- as_factor(x$Borough)
+
+x <-x %>% mutate("NHW00PCT"=NHW00/totpop00, "NHW16PCT"=NHW16/totpop16) %>% 
+  mutate("NHWPCTDIFF"=NHW16PCT-NHW00PCT) %>% 
+  mutate("POSNHWDIFF"= if_else (NHWPCTDIFF > 0, TRUE, FALSE))
+
+```
+
+## HousingDB post 2010 Dataset
+
+[Data Source](https://www.nyc.gov/site/planning/data-maps/open-data/dwn-housing-database.page)
+This dataset comes from the NYC planning website. It contains records of all demolitions,
+alterations, and new constructions of housing through all boroughs since 2010. Though the
+data only concerns buildings completed after 2010, it contains data on the year of the permit,
+which provides information on when projects began, indicating years of high speculation and
+new construction.
+
+Limitations with this dataset include the fact that data is self-reported and not
+entirely is verified by the Departmentof City Planning (DCP). Additionally, they
+note that illegal conversion of housing stock cannot be recorded. As such,
+this dataset will not necessarily be representative in areas where illegal
+conversion is prevalent.
+
+### Data Wrangling
+
+```{r}
+housing <- read_csv(here("data", "raw_data", "raw_data_merwan","HousingDB_post2010.csv"))
+housing <- housing %>% 
+  mutate("Borough_Code"=substring(housing$CenTract20, 0, 5)) %>% 
+  inner_join(counties, by="Borough_Code")
+
+own_less <- as.factor(str_extract(housing$Ownership, "^[A-Za-z-, ]*"))
+housing <- housing %>% 
+  mutate("Ownership Abbrev"=own_less)
+housing <- housing[!is.na(housing$PermitYear),]
+housing <- housing[!is.na(housing$Job_Type),]
+housing <- housing[!is.na(housing$Ownership),]
+housing <- housing[!is.na(housing$`Ownership Abbrev`),]
+```
+
+```{r}
+# write to csv
+
+write_csv(x, here("data", "clean_data", "clean_data_merwan", "NYC_Gentrification_2000_16_clean.csv"))
+write_csv(housing, here("data", "clean_data", "clean_data_merwan", "HousingDB_post2010_clean.csv"))
+```
+
+# Cara Data Wrangling
+
+
+```{r}
+# Read gentrification level excel file
+geoid_gent <- read_excel(here("data", "raw_data", "raw_data_cara", "udp_ny_final_typology_jan_2019.xlsx"))
+
+# Get Brooklyn census tract geography 
+nyc_boundaries(geography = "tract")
+bk_qn_tracts <- nyc_boundaries(
+  geography = "tract",
+  filter_by = "borough",
+  region = c("brooklyn")
+  )
+
+# Transform `geoid` column into numeric values
+bk_qn_tracts1 <- transform(bk_qn_tracts,
+							geoid = as.numeric(geoid))
+
+# Join gentrification level df with Brooklyn census tract df
+bk_gent_levels <- left_join(bk_qn_tracts1, geoid_gent, by = "geoid") %>%
+  subset(Type_1.19!="Missing Data")
+
+# Convert geometry column to WKT (Well-Known Text)
+bk_gent_levels$wkt_multipolygon <- sapply(bk_gent_levels$geometry, function(mp) {
+  st_as_text(st_geometry(mp))
+})
+```
+
+```{r fig.width=40 fig.height=30}
+# Read redlining csv file separating districts into hazardous or declining
+redlining <- read_csv(here("data", "raw_data", "raw_data_cara", "redlining.csv"), show_col_types = FALSE)
+
+# Pivot redlining df from wide to long format
+redlining_long <- pivot_longer(redlining, `Percent labeled Declining`:`Percent labeled Hazardous`, names_to = "Category", values_to = "Percent") %>%
+  mutate(Percent_value = Percent * 100)
+
+# Convert values into rounded percent
+redlining_long$Percent_value_label <- paste0(sprintf("%.1f", redlining_long$Percent_value), "%")
+```
+
+```{r}
+# Read csv file of nyc public housing developments
+public_dev <- read_csv(here("data", "raw_data", "raw_data_cara", "NYCHA_Public_Housing_Developments.csv"), show_col_types = FALSE)
+
+# Group by borough and remove rows with NA values
+public_dev <- public_dev %>%
+  group_by(BOROUGH) %>% 
+  na.omit()
+```
+
+```{r message=FALSE, warning=FALSE}
+# write to csv
+# Write cleaned data shp file with geometry data
+st_crs(bk_gent_levels, here("data", "clean_data", "clean_data_cara", "bk_gent_levels.shp"))
+write_sf(bk_gent_levels, here("data", "clean_data", "clean_data_cara", "bk_gent_levels.shp"))
+write_csv(bk_gent_levels, here("data", "clean_data", "clean_data_cara", "bk_gent_levels.csv"))
+
+
+
+# Write cleaned data csv file
+write_csv(redlining_long, here("data", "clean_data", "clean_data_cara", "bk_redlining_long.csv"))
+
+# Write cleaned data csv file
+write_csv(public_dev, here("data", "clean_data", "clean_data_cara","bk_public_developments.csv"))
+```
+
+# Grant Data Wrangling
+
+```{r}
+property_sales_2023 <- read_excel(here("data", "raw_data", "raw_data_grant", "Brooklyn Sales 2023.xlsx"), sheet = "Brooklyn", skip = 6)
+property_sales_2022 <- read_excel(here("data", "raw_data", "raw_data_grant", "Brooklyn 2022 Sales.xlsx"), sheet = "Brooklyn", skip = 6)
+property_sales_2021 <- read_excel(here("data", "raw_data", "raw_data_grant", "Brooklyn 2021 Sales.xlsx"), sheet = "Brooklyn", skip = 6)
+property_sales_2020 <- read_excel(here("data", "raw_data", "raw_data_grant", "Brooklyn 2020 Sales.xlsx"), sheet = "Brooklyn", skip = 6)
+property_sales_2019 <- read_excel(here("data", "raw_data", "raw_data_grant", "Brooklyn 2019 Sales.xlsx"), sheet = "Brooklyn", skip = 4)
+property_sales_2018 <- read_excel(here("data", "raw_data", "raw_data_grant", "Brooklyn 2018 Sales.xlsx"), sheet = "Brooklyn", skip = 4)
+property_sales_2017 <- read_excel(here("data", "raw_data", "raw_data_grant", "Brooklyn 2017 Sales.xls"), sheet = "Brooklyn", skip = 4)
+property_sales_2016 <- read_excel(here("data", "raw_data", "raw_data_grant", "Brooklyn 2016 Sales.xls"), sheet = "Brooklyn", skip = 4)
+property_sales_2015 <- read_excel(here("data", "raw_data", "raw_data_grant", "Brooklyn 2015 Sales.xls"), sheet = "Brooklyn", skip = 4)
+property_sales_2014 <- read_excel(here("data", "raw_data", "raw_data_grant", "Brooklyn 2014 Sales.xls"), sheet = "Brooklyn", skip = 4)
+property_sales_2013 <- read_excel(here("data", "raw_data", "raw_data_grant", "Brooklyn 2013 Sales.xls"), sheet = "Brooklyn", skip = 4)
+```
+
+```{r}
+colnames(property_sales_2023) <- as.character(gsub("\\s+", " ", gsub(" $", "", gsub("[\r|\n]+", " ", tolower(colnames(property_sales_2023))))))
+colnames(property_sales_2022) <- as.character(gsub("\\s+", " ", gsub(" $", "", gsub("[\r|\n]+", " ", tolower(colnames(property_sales_2022))))))
+colnames(property_sales_2021) <- as.character(gsub("\\s+", " ", gsub(" $", "", gsub("[\r|\n]+", " ", tolower(colnames(property_sales_2021))))))
+colnames(property_sales_2020) <- as.character(gsub("\\s+", " ", gsub(" $", "", gsub("[\r|\n]+", " ", tolower(colnames(property_sales_2020))))))
+colnames(property_sales_2019) <- as.character(gsub("\\s+", " ", gsub(" $", "", gsub("[\r|\n]+", " ", tolower(colnames(property_sales_2019))))))
+colnames(property_sales_2018) <- as.character(gsub("\\s+", " ", gsub(" $", "", gsub("[\r|\n]+", " ", tolower(colnames(property_sales_2018))))))
+colnames(property_sales_2017) <- as.character(gsub("\\s+", " ", gsub(" $", "", gsub("[\r|\n]+", " ", tolower(colnames(property_sales_2017))))))
+colnames(property_sales_2016) <- as.character(gsub("\\s+", " ", gsub(" $", "", gsub("[\r|\n]+", " ", tolower(colnames(property_sales_2016))))))
+colnames(property_sales_2015) <- as.character(gsub("\\s+", " ", gsub(" $", "", gsub("[\r|\n]+", " ", tolower(colnames(property_sales_2015))))))
+colnames(property_sales_2014) <- as.character(gsub("\\s+", " ", gsub(" $", "", gsub("[\r|\n]+", " ", tolower(colnames(property_sales_2014))))))
+colnames(property_sales_2013) <- as.character(gsub("\\s+", " ", gsub(" $", "", gsub("[\r|\n]+", " ", tolower(colnames(property_sales_2013))))))
+```
+
+```{r}
+property_sales_2023 <- property_sales_2023 %>%
+  select(neighborhood, "building class category", block, lot, "ease-ment", address, "apartment number", "zip code", "residential units", "commercial units", "total units", "land square feet", "gross square feet", "year built", "building class at time of sale", "sale price", "sale date")
+
+property_sales_2022 <- property_sales_2022 %>%
+  select(neighborhood, "building class category", block, lot, "ease-ment", address, "apartment number", "zip code", "residential units", "commercial units", "total units", "land square feet", "gross square feet", "year built", "building class at time of sale", "sale price", "sale date")
+
+property_sales_2021 <- property_sales_2021 %>%
+  select(neighborhood, "building class category", block, lot, "ease-ment", address, "apartment number", "zip code", "residential units", "commercial units", "total units", "land square feet", "gross square feet", "year built", "building class at time of sale", "sale price", "sale date")
+
+property_sales_2020 <- property_sales_2020 %>%
+  select(neighborhood, "building class category", block, lot, "ease-ment", address, "apartment number", "zip code", "residential units", "commercial units", "total units", "land square feet", "gross square feet", "year built", "building class at time of sale", "sale price", "sale date")
+
+property_sales_2019 <- property_sales_2019 %>%
+  select(neighborhood, "building class category", block, lot, "ease-ment", address, "apartment number", "zip code", "residential units", "commercial units", "total units", "land square feet", "gross square feet", "year built", "building class at time of sale", "sale price", "sale date")
+
+property_sales_2018 <- property_sales_2018 %>%
+  select(neighborhood, "building class category", block, lot, "ease-ment", address, "apartment number", "zip code", "residential units", "commercial units", "total units", "land square feet", "gross square feet", "year built", "building class at time of sale", "sale price", "sale date")
+
+property_sales_2017 <- property_sales_2017 %>%
+  select(neighborhood, "building class category", block, lot, "ease-ment", address, "apartment number", "zip code", "residential units", "commercial units", "total units", "land square feet", "gross square feet", "year built", "building class at time of sale", "sale price", "sale date")
+
+property_sales_2016 <- property_sales_2016 %>%
+  select(neighborhood, "building class category", block, lot, "ease-ment", address, "apartment number", "zip code", "residential units", "commercial units", "total units", "land square feet", "gross square feet", "year built", "building class at time of sale", "sale price", "sale date")
+
+property_sales_2015 <- property_sales_2015 %>%
+  select(neighborhood, "building class category", block, lot, "ease-ment", address, "apartment number", "zip code", "residential units", "commercial units", "total units", "land square feet", "gross square feet", "year built", "building class at time of sale", "sale price", "sale date")
+
+property_sales_2014 <- property_sales_2014 %>%
+  select(neighborhood, "building class category", block, lot, "ease-ment", address, "apartment number", "zip code", "residential units", "commercial units", "total units", "land square feet", "gross square feet", "year built", "building class at time of sale", "sale price", "sale date")
+
+property_sales_2013 <- property_sales_2013 %>%
+  select(neighborhood, "building class category", block, lot, "ease-ment", address, "apartment number", "zip code", "residential units", "commercial units", "total units", "land square feet", "gross square feet", "year built", "building class at time of sale", "sale price", "sale date")
+```
+
+```{r}
+property_sales_2013_2023 <- bind_rows(property_sales_2013, property_sales_2014, property_sales_2015, property_sales_2016, property_sales_2017, property_sales_2018, property_sales_2019, property_sales_2020, property_sales_2021, property_sales_2022, property_sales_2023)
+```
+
+```{r}
+property_sales_2013_2023_grouped <- property_sales_2013_2023 %>%
+  filter(`sale price` > 0) %>%
+  group_by(block, lot)
+```
+
+```{r}
+property_value_growth <- property_sales_2013_2023_grouped %>%
+  filter(`sale price` > 1) %>%
+  arrange(block, lot, `sale date`) %>%
+  filter(n_distinct(`sale price`) > 1) %>%
+  select(block, lot, neighborhood, `sale price`, `sale date`) %>%
+  group_by(block, lot)%>%
+  mutate(price_diff = c(NA, diff(`sale price`))) %>%
+  mutate(date_diff = c(NA, diff(as.numeric(`sale date`)))) %>%
+  filter(!is.na(price_diff) & price_diff > 0) %>%
+  select(block, lot, neighborhood, price_diff, date_diff)
+```
+
+```{r}
+# Write cleaned data csv file
+write_csv(property_value_growth, here("data", "clean_data", "clean_data_grant","property_value_growth.csv"))
+```
+
