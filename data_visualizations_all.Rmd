@@ -1,0 +1,278 @@
+---
+title: Urban Gentrification and transportation- data visualizations
+author: Antoinette Tan
+output:
+  rmdformats::downcute
+
+---
+
+# Antoinette's Data Visualizations
+
+Inspiration from here: https://freddybarragan.netlify.app/media/bayes/bayes_final.html
+
+
+```{r setup, include=FALSE}
+library(tidycensus)
+library(sf)
+library(tidyverse)
+library(here)
+library(ggplot2)
+library(ggmap)
+library(prettydoc)
+library(egg) 
+library(plotly)
+library(ggiraph)
+library(ggrepel)
+
+knitr::opts_chunk$set(tidy = FALSE, message=FALSE, cache.extra = packageVersion('tufte'))
+options(htmltools.dir.version = FALSE)
+```
+
+
+```{r message=FALSE, warning=FALSE}
+#  Read CSV File
+csv_clean_data <- read_csv(here("data", "clean_data", "clean_data_ant", "transportation_clean_data_csv.csv"))
+#  Read Shape File
+transportation_clean_data <- st_read(here("data", "clean_data", "clean_data_ant", "transportation_clean_data_shp.shp"))
+#  Replace Column abbr Names in Shape File with full name from CSV
+colnames(transportation_clean_data) <- colnames(csv_clean_data)
+
+
+transit_points <- st_read(here("data", "clean_data", "clean_data_ant", "transit_points.shp"))
+```
+
+
+```{r message=FALSE, warning=FALSE}
+transit_point_map<- ggplot(transit_points) +
+    geom_sf() +
+    theme_minimal() +
+    theme(panel.grid.major = element_line("transparent"),
+          axis.text = element_blank()) +
+    ggtitle(" Population")+ 
+      theme(panel.grid.major = element_line("transparent"),
+            plot.title = element_text(size = 13, face = "bold"),
+            legend.title = element_text(size = 8), 
+            legend.text = element_text(size = 8)) + 
+      guides(shape = guide_legend(override.aes = list(size = 4)),
+             color = guide_legend(override.aes = list(size = 4)))
+transit_point_map
+```
+
+
+```{r message=FALSE, warning=FALSE, fig.height=8*4, fig.width=8*2}
+subway_map <- transportation_clean_data %>%
+  ggplot() +
+  geom_sf(aes(fill = sub_count), color = "#8f98aa") +
+  geom_sf(data = transit_points, size = 1.5) +
+  scale_fill_gradientn(colors=c("#FCF5EE","#b5cbcf","#55717b","#0a4260"), na.value="#D6D6D6") +
+  # https://www.color-hex.com/color-palette/100132
+  theme_minimal() +
+  ggtitle("Subway Count \nby Neighborhood")+ 
+  theme(axis.text = element_blank(),
+        panel.grid.major = element_line("transparent"),
+        plot.title = element_text(family="DIN Condensed", size = 40, face = "bold", hjust=.5),
+        legend.key.width = unit(.5, "in"),
+        legend.title = element_text(size = 25, face="bold", family="DIN Condensed"), 
+        legend.position = "bottom" ,
+        legend.text = element_text(size = 20, face="bold", family="DIN Condensed"))+
+  guides(fill = guide_colourbar(title = "Number of Subway Stations", title.position="top", title.hjust = 0.5))
+
+rent_map <- transportation_clean_data %>%
+  ggplot() +
+  geom_sf(aes(fill = mean_rent), color = "#8f98aa") +
+  geom_sf(data = transit_points, size = 1.5) +
+  scale_fill_gradientn(colors = c("#FCF5EE","#beafc2", "#8155ba", "#695e93")) +
+  # https://www.color-hex.com/color-palette/1044873
+  theme_minimal() +
+  ggtitle("Mean Rent \nby Neighborhood")+ 
+  theme(axis.text = element_blank(),
+        panel.grid.major = element_line("transparent"),
+        plot.title = element_text(family="DIN Condensed", size = 40, face = "bold", hjust=.5),
+        legend.key.width = unit(.5, "in"),
+        legend.title = element_text(size = 25, face="bold", family="DIN Condensed"), 
+        legend.position = "bottom" ,
+        legend.text = element_text(size = 20, face="bold", family="DIN Condensed"))+
+    guides(fill = guide_colourbar(title = "Dollars", title.position="top", title.hjust = 0.5))
+
+evict <- transportation_clean_data %>%
+  ggplot() +
+  geom_sf(aes(fill = eviction_count), color = "#8f98aa")+
+  geom_sf(data = transit_points, size = 1.5) +
+  scale_fill_gradientn(colors = c("#FCF5EE", "#cce2cb", "#b6cfb6","#97c1a9")) +
+  # https://www.color-hex.com/color-palette/1044832
+  theme_minimal() +
+  ggtitle("Eviction Counts \nby Neighborhood")+ 
+  theme(axis.text = element_blank(),
+        panel.grid.major = element_line("transparent"),
+        plot.title = element_text(family="DIN Condensed", size = 40, face = "bold", hjust=.5),
+        legend.key.width = unit(.5, "in"),
+        legend.title = element_text(size = 25, face="bold", family="DIN Condensed"), 
+        legend.position = "bottom" ,
+        legend.text = element_text(size = 20, face="bold", family="DIN Condensed"))+
+  guides(fill = guide_colourbar(title = "Number of Evictions", title.position="top", title.hjust = 0.5))
+
+noncit <- transportation_clean_data %>%
+  ggplot() +
+  geom_sf(aes(fill = noncitizen_perc), color = "#8f98aa") +
+  geom_sf(data = transit_points, size = 1.5) +
+  scale_fill_gradientn(colors = c("#FCF5EE","#ead1dc", "#d5a6bd", "#c27ba0")) +
+  # https://www.color-hex.com/color-palette/1044826
+  theme_minimal() +
+  ggtitle("Immigrant Density \nby Neighborhood")+ 
+  theme(axis.text = element_blank(),
+        panel.grid.major = element_line("transparent"),
+        plot.title = element_text(family="DIN Condensed", size = 40, face = "bold", hjust=.5),
+        legend.key.width = unit(.5, "in"),
+        legend.title = element_text(size = 25, face="bold", family="DIN Condensed"), 
+        legend.position = "bottom" ,
+        legend.text = element_text(size = 20, face="bold", family="DIN Condensed"))+
+  guides(fill = guide_colourbar(title = "Percent Non-Citizen", title.position="top", title.hjust = 0.5))
+
+ggarrange(subway_map, rent_map,evict, noncit,
+          ncol=2, nrow=2, padding = unit(3,
+  "line"))
+
+```
+```{r message=FALSE, warning=FALSE}
+white <- transportation_clean_data %>%
+  ggplot() +
+  geom_sf(aes(fill = white_perc), color = "#8f98aa") +
+  geom_sf(data = transit_points, size = 1.5) +
+  scale_fill_gradientn(colors = c("#FCF5EE","#919BB6", "#5A6687", "#3D465C")) +
+  theme_minimal() +
+  ggtitle("White Population \nby Neighborhood")+ 
+  theme(axis.text = element_blank(),
+        panel.grid.major = element_line("transparent"),
+        plot.title = element_text(family="DIN Condensed", size = 40, face = "bold", hjust=.5),
+        legend.key.width = unit(.5, "in"),
+        legend.title = element_text(size = 25, face="bold", family="DIN Condensed"), 
+        legend.position = "bottom" ,
+        legend.text = element_text(size = 20, face="bold", family="DIN Condensed"))+
+    guides(fill = guide_colourbar(title = "Percent White", title.position="top", title.hjust = 0.5))
+
+black <- transportation_clean_data %>%
+  ggplot() +
+  geom_sf(aes(fill = black_perc), color = "#8f98aa") +
+  geom_sf(data = transit_points, size = 1.5) +
+  scale_fill_gradientn(colors = c("#FCF5EE","#F8ABA6", "#F58581", "#DB3F37")) +
+  theme_minimal() +
+  ggtitle("Black Population \nby Neighborhood")+ 
+  theme(axis.text = element_blank(),
+        panel.grid.major = element_line("transparent"),
+        plot.title = element_text(family="DIN Condensed", size = 40, face = "bold", hjust=.5),
+        legend.key.width = unit(.5, "in"),
+        legend.title = element_text(size = 25, face="bold", family="DIN Condensed"), 
+        legend.position = "bottom" ,
+        legend.text = element_text(size = 20, face="bold", family="DIN Condensed"))+
+    guides(fill = guide_colourbar(title = "Percent Black", title.position="top", title.hjust = 0.5))
+
+asian <- transportation_clean_data %>%
+  ggplot() +
+  geom_sf(aes(fill = asian_perc), color = "#8f98aa") +
+  geom_sf(data = transit_points, size = 1.5) +
+  scale_fill_gradientn(colors = c("#FCF5EE","#C1C5EC", "#A1A8E2", "#4451C5"),                      
+                       guide = guide_colourbar(title = "Percent Asian")) +
+  theme_minimal() +
+  ggtitle("Asian Population \nby Neighborhood")+ 
+  theme(axis.text = element_blank(),
+        panel.grid.major = element_line("transparent"),
+        plot.title = element_text(family="DIN Condensed", size = 40, face = "bold", hjust=.5),
+        legend.key.width = unit(.5, "in"),
+        legend.title = element_text(size = 25, face="bold", family="DIN Condensed"), 
+        legend.position = "bottom" ,
+        legend.text = element_text(size = 20, face="bold", family="DIN Condensed"))+
+    guides(fill = guide_colourbar(title = "Percent Asian", title.position="top", title.hjust = 0.5))
+
+latinx <- transportation_clean_data %>%
+  ggplot() +
+  geom_sf(aes(fill = latinx_perc), color = "#8f98aa")+
+  geom_sf(data = transit_points, size = 1.5) +
+  scale_fill_gradientn(colors = c("#FCF5EE","#F4E2B8", "#E9C572", "#E77E2F")) +
+  theme_minimal() +
+  ggtitle("Latinx Population \nby Neighborhood")+ 
+  theme(axis.text = element_blank(),
+        panel.grid.major = element_line("transparent"),
+        plot.title = element_text(family="DIN Condensed", size = 40, face = "bold", hjust=.5),
+        legend.key.width = unit(.5, "in"),
+        legend.title = element_text(size = 25, face="bold", family="DIN Condensed"), 
+        legend.position = "bottom" ,
+        legend.text = element_text(size = 20, face="bold", family="DIN Condensed"))+
+  guides(fill = guide_colourbar(title = "Percent Latinx", title.position="top", title.hjust = 0.5))
+```
+
+```{r, fig.height=8*4, fig.width=8*2, message=FALSE, warning=FALSE}
+ggarrange(subway_map, white, black, latinx, asian, 
+          ncol=3, nrow=2, padding = unit(3,
+  "line"))
+```
+
+
+
+```{r message=FALSE, warning=FALSE}
+gg <- ggplot(transportation_clean_data) +
+  geom_sf(fill = "antiquewhite") +
+  theme_minimal() +
+  ggtitle("Neighborhood Names") +
+  geom_sf_label_interactive(aes(label = NTAName, tooltip = NTAName),
+                            size = 1.5) + 
+  theme(panel.background = element_rect(fill = "aliceblue"),
+        axis.title=element_blank(),
+        axis.text = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks = element_blank(),
+        panel.grid.major = element_blank()) 
+
+girafe(ggobj = gg)
+```
+
+# Madie's Data Wrangling
+
+
+Number of Qualified Units per Borough for each Tax Exemption Type 
+```{r}
+residential_developments = read_csv(here("data", "clean_data", "clean_data_madie","residential_developments.csv"))
+
+ggplot(residential_developments, aes(x=tax_type, y = units, fill=borough))+
+  geom_col(position="dodge") +
+  labs(x="Tax Exemption Type",y= "Number of Units per Borough", title="Units per Borough Qualified for Property Tax Exemption Completed (2010-2020)")
+
+```
+Low Income compared with 421a Qualified Units per borough
+```{r}
+units_low_income_421a = read_csv(here("data", "clean_data", "clean_data_madie","units_low_income_421a.csv"))
+
+ggplot(units_low_income_421a, aes(x=borough,y=value, fill=unit_type)) + 
+  geom_bar(stat="identity", position="identity", alpha=.5)+
+  labs(x="Borough", y="Number of Units", title="Low Income and 421a Qualified Units per Borough (2010-2020)", color="Unit Type")
+```
+Median Gross Rent by Borough
+```{r}
+borough_median_rent = read_csv(here("data", "clean_data", "clean_data_madie", "borough_median_rent.csv"))
+
+ggplot(borough_median_rent, aes(x=year, y=value, color=Name, group=Name))+
+  geom_point()+
+  geom_line()+
+  labs(x="Year", y="Rent ($)", title="Median Gross Rent by Borough (2006-2021)")
+```
+Median Gross Rent by Brooklyn Community Districts
+```{r}
+brooklyn_median_rent = read_csv(here("data", "clean_data", "clean_data_madie","brooklyn_median_rent.csv"))
+
+ggplot(brooklyn_median_rent, aes(x=year, y=rent, group=Name, color=Name)) +
+  geom_point()+
+  geom_line()+
+  labs(x="Year", y="Median Rent($)", title="Median Gross Rent by Neighborhood in Brooklyn (2006-2021)", col = "Neighborhood") +
+  theme(legend.title = element_text(size = 10), 
+               legend.text = element_text(size = 7))
+```
+
+```{r}
+diff_median_rent = read_csv(here("data", "clean_data", "clean_data_madie","diff_median_rent.csv"))
+
+ggplot(diff_median_rent, aes(x=unit_nums, y=diff)) +
+  geom_point(alpha=0.3) + 
+  geom_smooth(method="lm", se=FALSE) + 
+  geom_label_repel(label=diff_median_rent$Name, size = 2.5) +
+  labs(x="Number of 421a Units", y="Median Rent Increase($)", title="Linear Model of 421a Units Number and Median Rent Increase")
+```
+
