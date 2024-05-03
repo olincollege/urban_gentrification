@@ -244,7 +244,7 @@ borough_median_rent = read_csv(here("data", "clean_data", "clean_data_madie", "b
 
 ggplot(borough_median_rent, aes(x=year, y=value, color=Name, group=Name))+
   geom_point(size = 2)+
-  geom_line(size=1)+
+  geom_line(linewidth=1)+
   scale_color_manual(values = c("#F58581", "#E9C572", "#97c1a9", "#4451C5","#8155ba")) +
   labs(x="Year", y="Rent ($)", title="Median Gross Rent by Borough (2006-2021)") +
   theme(plot.title = element_text(size = 15, face = "bold"),
@@ -271,7 +271,7 @@ brooklyn_median_rent_top_10 <- brooklyn_median_rent %>%
 
 ggplot(brooklyn_median_rent_top_10, aes(x=year, y=rent, group=Name, color=Name)) +
   geom_point(size=2)+
-  geom_line(size=1)+
+  geom_line(linewidth=1)+
   scale_color_manual(values=c("#F58581", "#E9C572", "#97c1a9", "#4451C5","#8155ba", "#c27ba0", "#E77E2F", "#8155ba", "#415d43", "#474973")) +
   labs(x="Year", y="Median Rent($)", title="Median Gross Rent by Neighborhood in Brooklyn (2006-2021)", col = "Neighborhood") +
   theme(legend.title = element_text(size = 10, face = "bold"), 
@@ -443,7 +443,7 @@ introduced.
 gov_housing = housing[housing$`Ownership Abbrev`=='Government, City',]
 gov_housing = gov_housing[gov_housing$Borough != "Staten Island",]
 ggplot(data=gov_housing[gov_housing$Job_Type=='New Building',], aes(x=PermitYear, fill=Ownership)) +
-    labs(title="Ownership of Government Housing", x="Permit Year", y="Cnt") +
+    labs(title="Government Ownership of Housing in Brooklyn", x="Permit Year", y="Cnt") +
   geom_bar() +
   scale_fill_manual(values=c("#F58581", "#E9C572", "#97c1a9", "#4451C5","#8155ba", "#c27ba0", "#E77E2F", "#8155ba", "#415d43", "#474973", "#c1121f")) +
   facet_wrap(~Borough, scales='free', ncol=2) +
