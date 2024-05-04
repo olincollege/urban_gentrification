@@ -25,6 +25,18 @@ knitr::opts_chunk$set(tidy = FALSE, message=FALSE, cache.extra = packageVersion(
 options(htmltools.dir.version = FALSE)
 ```
 
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+#  Read CSV File
+csv_clean_data <- read_csv(here("data", "clean_data", "clean_data_ant", "transportation_clean_data_csv.csv"))
+#  Read Shape File
+transportation_clean_data <- st_read(here("data", "clean_data", "clean_data_ant", "transportation_clean_data_shp.shp"), quiet=TRUE)
+#  Replace Column abbr Names in Shape File with full name from CSV
+colnames(transportation_clean_data) <- colnames(csv_clean_data)
+
+
+transit_points <- st_read(here("data", "clean_data", "clean_data_ant", "transit_points.shp"), quiet=TRUE)
+```
+
 # Introduction to Urban Gentrification in Brooklyn, New York
 
 Brooklyn, once an emblem of cultural diversity and resilience, now stands at the forefront of urban transformation. From its humble beginnings as a haven for immigrants and working-class families to its current status as a hotspot for upscale living and commercial development, the borough's journey reflects the ebb and flow of societal shifts.
@@ -35,6 +47,12 @@ Central to our investigation is the recognition that gentrification is not a mon
 
 Thus, our research question emerges: What historical, economic, and policy factors have contributed to the gentrification of Brooklyn?
 
+Through literature research. We've identified five main driving factors of gentrificaiton. These factors are summarized in Figure xx. 
+
+```{r echo=FALSE, fig.cap="Figure xx: Driving factors of gentrification.", out.width = '100%'}
+include_graphics(here("images", "driving_factors.png"))
+```
+
 Through this exploration, we seek not only to understand the past and present dynamics but also to inform future urban planning efforts, advocating for equitable development that preserves the diverse fabric of Brooklyn's communities while fostering vibrant and inclusive retail environments.
 
 ## Gentrification and Sustainability
@@ -44,6 +62,29 @@ Our research is grounded in the sustainability imperatives outlined by the Unite
 Furthermore, our research is guided by the principles of a Just Transition, as advocated by the Climate Justice Alliance.^[https://climatejusticealliance.org/just-transition/] These principles emphasize the equitable redistribution of resources and power, aiming to address and transform existing social inequities based on race, class, gender, and other forms of oppression. By examining the historical, economic, and policy factors driving gentrification in Brooklyn, we seek to uncover the systemic injustices perpetuated by current urban development paradigms and explore pathways towards more just and sustainable outcomes. In doing so, our research not only contributes to the broader discourse on urban sustainability but also advances efforts to create communities that are equitable, inclusive, and environmentally resilient.
 
 # Background on Gentrification in Brooklyn
+
+Throughout the rest of this report, maps of Brooklyn are presented. Please refer to Figure xx to see neighborhood names.
+
+```{r message=FALSE, warning=FALSE}
+gg <- ggplot(transportation_clean_data) +
+  geom_sf(aes(fill=NTAName)) +
+  theme_minimal() +
+  ggtitle("Neighborhood Names") +
+  geom_sf_label_interactive(aes(label = NTAName, tooltip = NTAName),
+                            size = 1.5) + 
+  scale_fill_manual(values = c("Greenpoint" = "#97c1a9", "Williamsburg" = "#F58581", "Downtown Brooklyn-DUMBO-Boerum Hill"= "#E9C572", "Bedford-Stuyvesant (West)" = "#4451C5", "Bedford-Stuyvesant (East)" = "#8155ba", na.value = "antiquewhite")) +
+  theme(panel.background = element_rect(fill = "aliceblue"),
+        axis.title=element_blank(),
+        axis.text = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks = element_blank(),
+        panel.grid.major = element_blank(),
+        plot.title = element_text(size = 20, face = "bold", hjust=.5),)
+
+girafe(ggobj = gg)
+```
+
+
 
 ```{r pressure, echo=FALSE, fig.cap="Figure 0: Displacement and Gentrification Census Tract Categories Based on Income Level.^[https://www.urbandisplacement.org/maps/new-york-gentrification-and-displacement/] ^[https://www.urbandisplacement.org/wp-content/uploads/2021/07/udp_methodology_for_ny_-_jan_2019.pdf]", out.width = '100%'}
 include_graphics(here("images", "census_typology.jpg"))
@@ -326,20 +367,9 @@ Neither of the plots in Figure _ clearly reveals a very strong correlation betwe
 
 ## Transportation Infrastructure
 
-```{r message=FALSE, warning=FALSE, echo=FALSE}
-#  Read CSV File
-csv_clean_data <- read_csv(here("data", "clean_data", "clean_data_ant", "transportation_clean_data_csv.csv"))
-#  Read Shape File
-transportation_clean_data <- st_read(here("data", "clean_data", "clean_data_ant", "transportation_clean_data_shp.shp"), quiet=TRUE)
-#  Replace Column abbr Names in Shape File with full name from CSV
-colnames(transportation_clean_data) <- colnames(csv_clean_data)
 
 
-transit_points <- st_read(here("data", "clean_data", "clean_data_ant", "transit_points.shp"), quiet=TRUE)
-```
-
-
-```{r message=FALSE, warning=FALSE, fig.height=8*4, fig.width=8*2, echo=FALSE, fig.cap="TODO: INSERT CAPTION"}
+```{r message=FALSE, warning=FALSE, fig.height=8*2, fig.width=8*2, echo=FALSE, fig.cap="TODO: INSERT CAPTION"}
 subway_map <- transportation_clean_data %>%
   ggplot() +
   geom_sf(aes(fill = sub_count), color = "#8f98aa") +
@@ -414,7 +444,7 @@ ggarrange(subway_map, rent_map,evict, noncit,
 
 ```
 
-```{r message=FALSE, warning=FALSE, fig.height=8*4, fig.width=8*2, echo=FALSE, fig.cap="TODO: INSERT CAPTION"}
+```{r message=FALSE, warning=FALSE, fig.height=8*2, fig.width=8*2, echo=FALSE, fig.cap="TODO: INSERT CAPTION"}
 white <- transportation_clean_data %>%
   ggplot() +
   geom_sf(aes(fill = white_perc), color = "#8f98aa") +
