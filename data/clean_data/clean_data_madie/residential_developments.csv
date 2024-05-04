@@ -1,21 +1,21 @@
-"","tax_type","borough","units"
-"1","421a","Bronx",9216
-"2","421a","Brooklyn",49654
-"3","421a","Manhattan",33791
-"4","421a","Queens",23573
-"5","421a","Staten Island",808
-"6","420c","Bronx",15617
-"7","420c","Brooklyn",6811
-"8","420c","Manhattan",3575
-"9","420c","Queens",3401
-"10","420c","Staten Island",292
-"11","other","Bronx",771
-"12","other","Brooklyn",2169
-"13","other","Manhattan",1665
-"14","other","Queens",2572
-"15","other","Staten Island",140
-"16","none reported","Bronx",693
-"17","none reported","Brooklyn",7840
-"18","none reported","Manhattan",7033
-"19","none reported","Queens",2254
-"20","none reported","Staten Island",30
+tax_type,borough,units
+421a,Bronx,9216
+421a,Brooklyn,49654
+421a,Manhattan,33791
+421a,Queens,23573
+421a,Staten Island,808
+420c,Bronx,15617
+420c,Brooklyn,6811
+420c,Manhattan,3575
+420c,Queens,3401
+420c,Staten Island,292
+other,Bronx,771
+other,Brooklyn,2169
+other,Manhattan,1665
+other,Queens,2572
+other,Staten Island,140
+none reported,Bronx,693
+none reported,Brooklyn,7840
+none reported,Manhattan,7033
+none reported,Queens,2254
+none reported,Staten Island,30

@@ -193,6 +193,9 @@ residential_developments = data.frame(
   borough = c("Bronx", "Brooklyn", "Manhattan", "Queens", "Staten Island","Bronx", "Brooklyn", "Manhattan", "Queens", "Staten Island","Bronx", "Brooklyn", "Manhattan", "Queens", "Staten Island","Bronx", "Brooklyn", "Manhattan", "Queens", "Staten Island"),
   units = c(9216, 49654, 33791, 23573, 808, 15617, 6811, 3575, 3401, 292, 771, 2169, 1665, 2572, 140, 693, 7840, 7033, 2254, 30)
 )
+
+write_csv(residential_developments, here("data", "clean_data", "clean_data_madie", "residential_developments.csv"))
+
 ```
 Total Low Income Units 
 [link](https://furmancenter.org/neighborhoods/view/brooklyn)
@@ -315,8 +318,6 @@ diff_median_rent <-
 
 ```{r message=FALSE, warning=FALSE}
 # write to cvs
-
-write_csv(residential_developments, here("data", "clean_data", "clean_data_madie", "residential_developments.csv"))
 
 write_csv(borough_low_income_units, here("data", "clean_data", "clean_data_madie", "borough_low_income_units_2010_2020.csv"))
 
