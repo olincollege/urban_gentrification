@@ -80,7 +80,7 @@ include_graphics(here("images", "driving_factors.png"))
 
 Through this exploration, we seek not only to understand the past and present dynamics but also to inform future urban planning efforts, advocating for equitable development that preserves the diverse fabric of Brooklyn's communities while fostering vibrant and inclusive retail environments.
 
-To reproduce the findings found in this article yourself, please refer to the GitHub found at this link: https://github.com/olincollege/urban_gentrification.
+To reproduce the findings found in this article yourself, please refer to the GitHub repository found at this link: https://github.com/olincollege/urban_gentrification.
 
 ## Gentrification and Sustainability
 
@@ -380,6 +380,13 @@ Neither of the plots in Figure 17 clearly reveals a very strong correlation betw
 
 
 
+Upon research of transportation and gentrification, it is found that the literature is split on the relation between transportation and gentrification.An article from Bloomberg studied whether transit corridors contribute to the displacement of low-income households.^[https://www.bloomberg.com/news/articles/2015-07-23/subway-and-bus-stops-are-not-the-cause-of-gentrification-in-new-york?embedded-checkout=true
+]. Although there is an initial correlation between high incomes and access to subway stops, a more detailed analysis showed that transit access is not the primary factor driving changes in neighborhood income levels between 2000 and 2010. Instead, other factors such as population growth, racial diversity, education levels, and proximity to central business districts play more significant roles. The study highlights the importance of transit for less advantaged groups and suggests that a lack of transit access can hinder economic opportunities for these groups.
+
+Another study from University of Texas, Austin^[https://www.mdpi.com/2073-445X/12/2/358] examined the relationship between gentrification and public transit service in the New York–Northern New Jersey–Long Island area. It identified higher rates of transit deserts (areas with limited transit service) in economically disadvantaged neighborhoods and highlighted the significant impact of transit services on gentrification progress. However, the study also noted that transit services have insignificant effects on super-gentrification. Policymakers are urged to allocate public transit budgets carefully to avoid displacement while meeting the transit needs of different socioeconomic groups. 
+
+To corroborate information found in these articles, Figures 18 and 19 were created to explore the relationship between subway station count per neighborhood in Brooklyn and different factors that indicate the occurrence of gentrification.
+
 ```{r message=FALSE, warning=FALSE, fig.height=8*2, fig.width=8*2, echo=FALSE, fig.cap="Fig 18. Map of subway count by neighborhood along with three factors that are often a sign of gentrification. Each map is overlaid with subway transit points."}
 subway_map <- transportation_clean_data %>%
   ggplot() +
@@ -455,7 +462,7 @@ ggarrange(subway_map, rent_map,evict, noncit,
 
 ```
 
-Figure 18 was created by combining data from the Census American Community Survey^[https://data.cityofnewyork.us/City-Government/2020-Census-Tracts-to-2020-NTAs-and-CDTAs-Equivale/hm78-6dwm/about_data], Department of Investigation^[https://data.cityofnewyork.us/City-Government/Evictions/6z8x-wfk4], and MTA Subway Stations^[https://data.ny.gov/Transportation/MTA-Subway-Stations/39hk-dx4f/about_data]. Data was combined and summarized to get the final counts shown in Figure 18. Figure 18 indicates a correlation between subway count and mean rent. 
+Figure 18 was created by combining data from the Census American Community Survey^[https://data.cityofnewyork.us/City-Government/2020-Census-Tracts-to-2020-NTAs-and-CDTAs-Equivale/hm78-6dwm/about_data], Department of Investigation^[https://data.cityofnewyork.us/City-Government/Evictions/6z8x-wfk4], and MTA Subway Stations^[https://data.ny.gov/Transportation/MTA-Subway-Stations/39hk-dx4f/about_data]. Data was combined and summarized to get the final counts shown in Figure 18. By comparing the shaded areas of the various maps in Figure 18, a correlation is exposed between subway count and mean rent. As the number of subway stations increase in a neighborhood, so does the mean rent. 
 
 
 ```{r message=FALSE, warning=FALSE, fig.height=8*2, fig.width=8*2, echo=FALSE, fig.cap="Fig 19. Map of subway count by neighborhood along with demographic data. Each map is overlaid with subway transit points."}
@@ -529,12 +536,7 @@ ggarrange(subway_map, white, black, latinx, asian,
   "line"))
 ```
 
-Figure 19 shows that the neighborhoods with the highest densities of Black people have the lowest amount of subway stations.
-
-Upon research of transportation and gentrification, it is found that the literature is split on the relation between transportation and gentrification.An article from Bloomberg studied whether transit corridors contribute to the displacement of low-income households.^[https://www.bloomberg.com/news/articles/2015-07-23/subway-and-bus-stops-are-not-the-cause-of-gentrification-in-new-york?embedded-checkout=true
-]. Although there is an initial correlation between high incomes and access to subway stops, a more detailed analysis showed that transit access is not the primary factor driving changes in neighborhood income levels between 2000 and 2010. Instead, other factors such as population growth, racial diversity, education levels, and proximity to central business districts play more significant roles. The study highlights the importance of transit for less advantaged groups and suggests that a lack of transit access can hinder economic opportunities for these groups.
-
-Another study from University of Texas, Austin^[https://www.mdpi.com/2073-445X/12/2/358] examined the relationship between gentrification and public transit service in the New York–Northern New Jersey–Long Island area. It identified higher rates of transit deserts (areas with limited transit service) in economically disadvantaged neighborhoods and highlighted the significant impact of transit services on gentrification progress. However, the study also noted that transit services have insignificant effects on super-gentrification. Policymakers are urged to allocate public transit budgets carefully to avoid displacement while meeting the transit needs of different socioeconomic groups. 
+By comparing subway station count and the various demographics, Figure 19 shows that the neighborhoods with the highest densities of Black people have the lowest amount of subway stations.
 
 Overall, although the graphs presented in Figure 18 and Figure 19 show some correlation between transportation and gentrification, there are some limitations to the data. These limitation include the fact that different data sets are taken from different years based on available data, and the fact that it just accounts for how many subway stations there are per neighborhood rather than proximity to subway stations. 
 
