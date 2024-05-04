@@ -62,5 +62,5 @@ ggplot(diff_median_rent, aes(x=unit_nums, y=diff)) +
   geom_point(alpha=0.3) + 
   geom_smooth(method="lm", se=FALSE) + 
   geom_label_repel(label=diff_median_rent$Name, size = 2.5) +
-  labs(x="Number of 421a Units", y="Median Rent Increase($)", title="Linear Model of 421a Units Number and Median Rent Increase")
+  labs(x="Number of 421a Units", y="Median Rent Increase($)", title="Linear Model of Brooklyn's 421a Units and Median Rent Increase per Commu")
 ```
