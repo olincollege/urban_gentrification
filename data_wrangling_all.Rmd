@@ -184,30 +184,15 @@ write_sf(transit_points, here("data", "clean_data", "clean_data_ant", "transit_p
 # Madie's Data Wrangling
 
 
-Addresses of Properties Qualified for 421a Tax Exemption
-[link](https://www.nyc.gov/site/finance/property/benefits-421a.page)
-```{r message=FALSE, warning=FALSE}
-properties_421a_22_23 <- read_xlsx(here("data", "raw_data", "raw_data_madie","421a_2023_brooklyn.xlsx"))
-
-clean_prop <-
-  properties_421a_22_23 %>%
-  mutate(Address = str_to_title(Address)) %>%                                 # Converting addresses into better, parse-able format 
-  mutate(full_addy = paste(Address, ZIP_CODE, sep = ", Brooklyn, NY ")) %>%   # Completing each address and adding zip code
-  filter(YEAR_BUILT > 0) %>%                                                  # Filtering rows without proper years
-  distinct(YEAR_BUILT, full_addy, .keep_all = T) %>%                          # taking out rows with duplicate pairs of year and addresses
-  arrange(desc(YEAR_BUILT))
-```
 Number of Units Qualified for Tax Exemptions per Borough
 [link](https://furmancenter.org/files/publications/The_Role_of_421-a_Final.pdf)
 *This data frame was manually created using values taken from the above article in Table 2 on page 10.*
 ```{r message=FALSE, warning=FALSE}
 residential_developments = data.frame(
   tax_type = c("421a", "421a","421a","421a","421a","420c", "420c", "420c", "420c", "420c", "other", "other", "other", "other", "other", "none reported", "none reported", "none reported", "none reported", "none reported"),
-  borough = c("bronx", "brooklyn", "manhattan", "queens", "staten_island","bronx", "brooklyn", "manhattan", "queens", "staten_island","bronx", "brooklyn", "manhattan", "queens", "staten_island","bronx", "brooklyn", "manhattan", "queens", "staten_island"),
+  borough = c("Bronx", "Brooklyn", "Manhattan", "Queens", "Staten Island","Bronx", "Brooklyn", "Manhattan", "Queens", "Staten Island","Bronx", "Brooklyn", "Manhattan", "Queens", "Staten Island","Bronx", "Brooklyn", "Manhattan", "Queens", "Staten Island"),
   units = c(9216, 49654, 33791, 23573, 808, 15617, 6811, 3575, 3401, 292, 771, 2169, 1665, 2572, 140, 693, 7840, 7033, 2254, 30)
 )
-
-
 ```
 Total Low Income Units 
 [link](https://furmancenter.org/neighborhoods/view/brooklyn)
