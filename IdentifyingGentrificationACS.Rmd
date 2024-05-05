@@ -252,6 +252,19 @@ property_value_growth <- property_sales_2013_2023_grouped %>%
 ```
 
 ```{r}
+property_value_growth2 <- property_sales_2013_2023_grouped %>%
+  filter(`sale price` > 1) %>%
+  arrange(block, lot, `sale date`) %>%
+  filter(n_distinct(`sale price`) > 1) %>%
+  select(block, lot, neighborhood, `sale price`, `sale date`) %>%
+  group_by(block, lot)%>%
+  mutate(price_diff = 100 * (`sale price`/lag(`sale price`) - 1)) %>%
+  mutate(date_diff = c(NA, diff(as.numeric(`sale date`)))) %>%
+  filter(!is.na(price_diff) & price_diff > 0) %>%
+  select(block, lot, neighborhood, price_diff, date_diff)
+```
+
+```{r}
 
 ggplot(bayridge_appreciation, aes(x = date_diff, y = price_diff)) +
   geom_point() +
@@ -268,11 +281,11 @@ ggplot(bedstuy_appreciation, aes(x = date_diff, y = price_diff)) +
   ylim(0, 1e+06)
 ```
 ```{r}
-ggplot(property_value_growth %>% filter(neighborhood == "WILLIAMSBURG-NORTH" | neighborhood == "WILLIAMSBURG-EAST"| neighborhood == "WILLIAMSBURG-CENTRAL" | neighborhood == "WILLIAMSBURG-SOUTH"), aes(x=date_diff, y = price_diff))+
+ggplot(property_value_growth2 %>% filter(neighborhood == "WILLIAMSBURG-NORTH" | neighborhood == "WILLIAMSBURG-EAST"| neighborhood == "WILLIAMSBURG-CENTRAL" | neighborhood == "WILLIAMSBURG-SOUTH"), aes(x=date_diff, y = price_diff))+
   geom_point()+
   geom_smooth()+
   labs(title = "Williamsburg Property Appreciation", x = "Time Held", y = "Appreciation")+
-  scale_y_continuous(limits = c(1e+03, 1e+07))+
+  scale_y_continuous(trans="log10")+
   xlim(0, 3e+08)
 ```
 
@@ -344,12 +357,28 @@ ggplot(property_value_growth %>% filter(neighborhood == "GREENPOINT" | neighborh
 ```
 
 ```{r}
-```
-
-```{r})
+ggplot(property_value_growth2 %>% filter(neighborhood == "GREENPOINT" | neighborhood == "BEDFORD STUYVESANT") %>% mutate(date_diff_days = date_diff / 86400) %>% filter(date_diff_days > 60), aes(x=`date_diff_days`, price_diff))+
+  geom_point()+
+  geom_smooth()+
+  facet_wrap(~neighborhood)+
+  labs(title = "Property Appreciation By Hold Time", x = "Time Held (days)", y = "Appreciation (%)")+
+  scale_y_continuous(trans="log10")
 ```
 
 ```{r}
+ggplot(property_value_growth2 %>% filter(neighborhood == "DOWNTOWN-FULTON FERRY") %>% mutate(date_diff_days = date_diff / 86400) %>% filter(date_diff_days > 60), aes(x=`date_diff_days`, price_diff))+
+  geom_point()+
+  geom_smooth()+
+  facet_wrap(~neighborhood)+
+  labs(title = "Property Appreciation By Hold Time", x = "Time Held (days)", y = "Appreciation (%)")+
+  scale_y_continuous(trans="log10")
+```
+
+```{r}
+ggplot(property_value_growth %>% filter(neighborhood == "DOWNTOWN-FULTON FERRY") %>% mutate(date_diff_days = date_diff / 86400), aes(x=`date_diff_days`))+
+  geom_histogram(binwidth = 90)+
+  facet_wrap(~neighborhood)+
+  labs(title = "Property Hold Times", x = "Time Held (days)", y = "Sales Count")
 ```
 
 ```{r}
