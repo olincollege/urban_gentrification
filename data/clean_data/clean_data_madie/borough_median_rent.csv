@@ -1,0 +1,81 @@
+Name,year,value
+The Bronx,2006,1160
+The Bronx,2007,1180
+The Bronx,2008,1200
+The Bronx,2009,1210
+The Bronx,2010,1250
+The Bronx,2011,1270
+The Bronx,2012,1250
+The Bronx,2013,1280
+The Bronx,2014,1280
+The Bronx,2015,1320
+The Bronx,2016,1330
+The Bronx,2017,1350
+The Bronx,2018,1350
+The Bronx,2019,1370
+The Bronx,2020,1370
+The Bronx,2021,1390
+Brooklyn,2006,1260
+Brooklyn,2007,1290
+Brooklyn,2008,1300
+Brooklyn,2009,1340
+Brooklyn,2010,1390
+Brooklyn,2011,1390
+Brooklyn,2012,1410
+Brooklyn,2013,1440
+Brooklyn,2014,1480
+Brooklyn,2015,1530
+Brooklyn,2016,1580
+Brooklyn,2017,1580
+Brooklyn,2018,1620
+Brooklyn,2019,1650
+Brooklyn,2020,1640
+Brooklyn,2021,1730
+Manhattan,2006,1520
+Manhattan,2007,1550
+Manhattan,2008,1580
+Manhattan,2009,1710
+Manhattan,2010,1680
+Manhattan,2011,1760
+Manhattan,2012,1780
+Manhattan,2013,1800
+Manhattan,2014,1820
+Manhattan,2015,1920
+Manhattan,2016,1960
+Manhattan,2017,1850
+Manhattan,2018,1980
+Manhattan,2019,1950
+Manhattan,2020,1970
+Manhattan,2021,1980
+Queens,2006,1500
+Queens,2007,1510
+Queens,2008,1510
+Queens,2009,1560
+Queens,2010,1600
+Queens,2011,1600
+Queens,2012,1600
+Queens,2013,1610
+Queens,2014,1650
+Queens,2015,1710
+Queens,2016,1710
+Queens,2017,1730
+Queens,2018,1800
+Queens,2019,1830
+Queens,2020,1810
+Queens,2021,1820
+Staten Island,2006,1390
+Staten Island,2007,1470
+Staten Island,2008,1420
+Staten Island,2009,1440
+Staten Island,2010,1470
+Staten Island,2011,1390
+Staten Island,2012,1370
+Staten Island,2013,1400
+Staten Island,2014,1370
+Staten Island,2015,1440
+Staten Island,2016,1470
+Staten Island,2017,1490
+Staten Island,2018,1460
+Staten Island,2019,1450
+Staten Island,2020,1450
+Staten Island,2021,1530

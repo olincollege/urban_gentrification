@@ -1,0 +1,470 @@
+---
+title: Urban Gentrification and transportation- data visualizations
+author: Antoinette Tan
+output:
+  rmdformats::downcute
+
+---
+
+# Antoinette's Data Visualizations
+
+Inspiration from here: https://freddybarragan.netlify.app/media/bayes/bayes_final.html
+
+
+```{r setup, include=FALSE}
+library(tidycensus)
+library(sf)
+library(tidyverse)
+library(here)
+library(ggplot2)
+library(ggmap)
+library(prettydoc)
+library(egg) 
+library(plotly)
+library(ggiraph)
+library(ggrepel)
+library(leaflet)
+library(leaflet.extras)
+
+knitr::opts_chunk$set(tidy = FALSE, message=FALSE, cache.extra = packageVersion('tufte'))
+options(htmltools.dir.version = FALSE)
+```
+
+
+```{r message=FALSE, warning=FALSE}
+#  Read CSV File
+csv_clean_data <- read_csv(here("data", "clean_data", "clean_data_ant", "transportation_clean_data_csv.csv"))
+#  Read Shape File
+transportation_clean_data <- st_read(here("data", "clean_data", "clean_data_ant", "transportation_clean_data_shp.shp"))
+#  Replace Column abbr Names in Shape File with full name from CSV
+colnames(transportation_clean_data) <- colnames(csv_clean_data)
+
+
+transit_points <- st_read(here("data", "clean_data", "clean_data_ant", "transit_points.shp"))
+```
+
+
+```{r message=FALSE, warning=FALSE, fig.height=8*4, fig.width=8*2}
+subway_map <- transportation_clean_data %>%
+  ggplot() +
+  geom_sf(aes(fill = sub_count), color = "#8f98aa") +
+  geom_sf(data = transit_points, size = 1.5) +
+  scale_fill_gradientn(colors=c("#FCF5EE","#b5cbcf","#55717b","#0a4260"), na.value="#D6D6D6") +
+  # https://www.color-hex.com/color-palette/100132
+  theme_minimal() +
+  ggtitle("Subway Count \nby Neighborhood")+ 
+  theme(axis.text = element_blank(),
+        panel.grid.major = element_line("transparent"),
+        plot.title = element_text(size = 40, face = "bold", hjust=.5),
+        legend.key.width = unit(.5, "in"),
+        legend.title = element_text(size = 25, face="bold", family="DIN Condensed"), 
+        legend.position = "bottom" ,
+        legend.text = element_text(size = 20, face="bold", family="DIN Condensed"))+
+  guides(fill = guide_colourbar(title = "Number of Subway Stations", title.position="top", title.hjust = 0.5))
+
+rent_map <- transportation_clean_data %>%
+  ggplot() +
+  geom_sf(aes(fill = mean_rent), color = "#8f98aa") +
+  geom_sf(data = transit_points, size = 1.5) +
+  scale_fill_gradientn(colors = c("#FCF5EE","#beafc2", "#8155ba", "#695e93")) +
+  # https://www.color-hex.com/color-palette/1044873
+  theme_minimal() +
+  ggtitle("Mean Rent \nby Neighborhood")+ 
+  theme(axis.text = element_blank(),
+        panel.grid.major = element_line("transparent"),
+        plot.title = element_text(size = 40, face = "bold", hjust=.5),
+        legend.key.width = unit(.5, "in"),
+        legend.title = element_text(size = 25, face="bold", family="DIN Condensed"), 
+        legend.position = "bottom" ,
+        legend.text = element_text(size = 20, face="bold", family="DIN Condensed"))+
+    guides(fill = guide_colourbar(title = "Dollars", title.position="top", title.hjust = 0.5))
+
+evict <- transportation_clean_data %>%
+  ggplot() +
+  geom_sf(aes(fill = eviction_count), color = "#8f98aa")+
+  geom_sf(data = transit_points, size = 1.5) +
+  scale_fill_gradientn(colors = c("#FCF5EE", "#cce2cb", "#b6cfb6","#97c1a9")) +
+  # https://www.color-hex.com/color-palette/1044832
+  theme_minimal() +
+  ggtitle("Eviction Counts \nby Neighborhood")+ 
+  theme(axis.text = element_blank(),
+        panel.grid.major = element_line("transparent"),
+        plot.title = element_text(size = 40, face = "bold", hjust=.5),
+        legend.key.width = unit(.5, "in"),
+        legend.title = element_text(size = 25, face="bold", family="DIN Condensed"), 
+        legend.position = "bottom" ,
+        legend.text = element_text(size = 20, face="bold", family="DIN Condensed"))+
+  guides(fill = guide_colourbar(title = "Number of Evictions", title.position="top", title.hjust = 0.5))
+
+noncit <- transportation_clean_data %>%
+  ggplot() +
+  geom_sf(aes(fill = noncitizen_perc), color = "#8f98aa") +
+  geom_sf(data = transit_points, size = 1.5) +
+  scale_fill_gradientn(colors = c("#FCF5EE","#ead1dc", "#d5a6bd", "#c27ba0")) +
+  # https://www.color-hex.com/color-palette/1044826
+  theme_minimal() +
+  ggtitle("Immigrant Density \nby Neighborhood")+ 
+  theme(axis.text = element_blank(),
+        panel.grid.major = element_line("transparent"),
+        plot.title = element_text(size = 40, face = "bold", hjust=.5),
+        legend.key.width = unit(.5, "in"),
+        legend.title = element_text(size = 25, face="bold", family="DIN Condensed"), 
+        legend.position = "bottom" ,
+        legend.text = element_text(size = 20, face="bold", family="DIN Condensed"))+
+  guides(fill = guide_colourbar(title = "Percent Non-Citizen", title.position="top", title.hjust = 0.5))
+
+ggarrange(subway_map, rent_map,evict, noncit,
+          ncol=2, nrow=2, padding = unit(3,
+  "line"))
+
+```
+```{r message=FALSE, warning=FALSE}
+white <- transportation_clean_data %>%
+  ggplot() +
+  geom_sf(aes(fill = white_perc), color = "#8f98aa") +
+  geom_sf(data = transit_points, size = 1.5) +
+  scale_fill_gradientn(colors = c("#FCF5EE","#919BB6", "#5A6687", "#3D465C")) +
+  theme_minimal() +
+  ggtitle("White Population \nby Neighborhood")+ 
+  theme(axis.text = element_blank(),
+        panel.grid.major = element_line("transparent"),
+        plot.title = element_text(size = 40, face = "bold", hjust=.5),
+        legend.key.width = unit(.5, "in"),
+        legend.title = element_text(size = 25, face="bold", family="DIN Condensed"), 
+        legend.position = "bottom" ,
+        legend.text = element_text(size = 20, face="bold", family="DIN Condensed"))+
+    guides(fill = guide_colourbar(title = "Percent White", title.position="top", title.hjust = 0.5))
+
+black <- transportation_clean_data %>%
+  ggplot() +
+  geom_sf(aes(fill = black_perc), color = "#8f98aa") +
+  geom_sf(data = transit_points, size = 1.5) +
+  scale_fill_gradientn(colors = c("#FCF5EE","#F8ABA6", "#F58581", "#DB3F37")) +
+  theme_minimal() +
+  ggtitle("Black Population \nby Neighborhood")+ 
+  theme(axis.text = element_blank(),
+        panel.grid.major = element_line("transparent"),
+        plot.title = element_text(size = 40, face = "bold", hjust=.5),
+        legend.key.width = unit(.5, "in"),
+        legend.title = element_text(size = 25, face="bold", family="DIN Condensed"), 
+        legend.position = "bottom" ,
+        legend.text = element_text(size = 20, face="bold", family="DIN Condensed"))+
+    guides(fill = guide_colourbar(title = "Percent Black", title.position="top", title.hjust = 0.5))
+
+asian <- transportation_clean_data %>%
+  ggplot() +
+  geom_sf(aes(fill = asian_perc), color = "#8f98aa") +
+  geom_sf(data = transit_points, size = 1.5) +
+  scale_fill_gradientn(colors = c("#FCF5EE","#C1C5EC", "#A1A8E2", "#4451C5"),                      
+                       guide = guide_colourbar(title = "Percent Asian")) +
+  theme_minimal() +
+  ggtitle("Asian Population \nby Neighborhood")+ 
+  theme(axis.text = element_blank(),
+        panel.grid.major = element_line("transparent"),
+        plot.title = element_text(size = 40, face = "bold", hjust=.5),
+        legend.key.width = unit(.5, "in"),
+        legend.title = element_text(size = 25, face="bold", family="DIN Condensed"), 
+        legend.position = "bottom" ,
+        legend.text = element_text(size = 20, face="bold", family="DIN Condensed"))+
+    guides(fill = guide_colourbar(title = "Percent Asian", title.position="top", title.hjust = 0.5))
+
+latinx <- transportation_clean_data %>%
+  ggplot() +
+  geom_sf(aes(fill = latinx_perc), color = "#8f98aa")+
+  geom_sf(data = transit_points, size = 1.5) +
+  scale_fill_gradientn(colors = c("#FCF5EE","#F4E2B8", "#E9C572", "#E77E2F")) +
+  theme_minimal() +
+  ggtitle("Latinx Population \nby Neighborhood")+ 
+  theme(axis.text = element_blank(),
+        panel.grid.major = element_line("transparent"),
+        plot.title = element_text(size = 40, face = "bold", hjust=.5),
+        legend.key.width = unit(.5, "in"),
+        legend.title = element_text(size = 25, face="bold", family="DIN Condensed"), 
+        legend.position = "bottom" ,
+        legend.text = element_text(size = 20, face="bold", family="DIN Condensed"))+
+  guides(fill = guide_colourbar(title = "Percent Latinx", title.position="top", title.hjust = 0.5))
+```
+
+```{r, fig.height=8*4, fig.width=8*2, message=FALSE, warning=FALSE}
+ggarrange(subway_map, white, black, latinx, asian, 
+          ncol=3, nrow=2, padding = unit(3,
+  "line"))
+```
+
+
+
+```{r message=FALSE, warning=FALSE}
+gg <- ggplot(transportation_clean_data) +
+  geom_sf(fill = "antiquewhite") +
+  theme_minimal() +
+  ggtitle("Neighborhood Names") +
+  geom_sf_label_interactive(aes(label = NTAName, tooltip = NTAName),
+                            size = 1.5) + 
+  theme(panel.background = element_rect(fill = "aliceblue"),
+        axis.title=element_blank(),
+        axis.text = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks = element_blank(),
+        panel.grid.major = element_blank(),
+        plot.title = element_text(size = 20, face = "bold", hjust=.5),
+        )
+
+girafe(ggobj = gg)
+```
+
+# Madie's Data Visualizations
+
+
+Number of Qualified Units per Borough for each Tax Exemption Type 
+```{r message=FALSE, warning=FALSE}
+residential_developments = read_csv(here("data", "clean_data", "clean_data_madie","residential_developments.csv"))
+
+ggplot(residential_developments, aes(x=tax_type, y = units, fill=borough))+
+  geom_col(position="dodge") +
+  scale_fill_manual(values = c("#F58581", "#E9C572", "#97c1a9", "#4451C5","#8155ba")) +
+  labs(x="Tax Exemption Type",y= "Number of Units per Borough", title="Units per Borough Qualified for Property Tax Exemption Completed (2010-2020)") +
+  theme(plot.title = element_text(size = 10, face = "bold", hjust=.5),
+        legend.title = element_text(size = 10, face = "bold")) 
+
+```
+Low Income compared with 421a Qualified Units per borough
+```{r message=FALSE, warning=FALSE}
+units_low_income_421a = read_csv(here("data", "clean_data", "clean_data_madie","units_low_income_421a.csv"))
+
+ggplot(units_low_income_421a, aes(x=borough,y=value, fill=unit_type)) + 
+  geom_bar(stat="identity", position="identity", alpha=.5)+
+  scale_fill_manual(values = c("#F58581", "#4451C5")) +
+  labs(x="Borough", y="Number of Units", title="Low Income and 421a Qualified Units per Borough (2010-2020)", color="Unit Type") +
+  theme(plot.title = element_text(size = 11, face = "bold"),
+        legend.title = element_text(size = 10, face = "bold"))
+```
+Median Gross Rent by Borough
+```{r message=FALSE, warning=FALSE}
+borough_median_rent = read_csv(here("data", "clean_data", "clean_data_madie", "borough_median_rent.csv"))
+
+ggplot(borough_median_rent, aes(x=year, y=value, color=Name, group=Name))+
+  geom_point(size = 2)+
+  geom_line(linewidth=1)+
+  scale_color_manual(values = c("#F58581", "#E9C572", "#97c1a9", "#4451C5","#8155ba")) +
+  labs(x="Year", y="Rent ($)", title="Median Gross Rent by Borough (2006-2021)") +
+  theme(plot.title = element_text(size = 15, face = "bold"),
+        legend.title = element_text(size = 10, face = "bold"))
+
+```
+Median Gross Rent by Brooklyn Community Districts
+```{r message=FALSE, warning=FALSE}
+brooklyn_median_rent = read_csv(here("data", "clean_data", "clean_data_madie","brooklyn_median_rent.csv"))
+
+# Filter data for year 2021
+brooklyn_median_rent_2021 <- brooklyn_median_rent %>%
+  filter(year == 2021)
+
+# Identify the 10 names with the highest rent values in 2021
+top_10_names <- brooklyn_median_rent_2021 %>%
+  arrange(desc(rent)) %>%
+  slice_head(n = 10) %>%
+  pull(Name)
+
+# Filter original data for the top 10 names
+brooklyn_median_rent_top_10 <- brooklyn_median_rent %>%
+  filter(Name %in% top_10_names)
+
+ggplot(brooklyn_median_rent_top_10, aes(x=year, y=rent, group=Name, color=Name)) +
+  geom_point(size=2)+
+  geom_line(linewidth=1)+
+  scale_color_manual(values=c("#F58581", "#E9C572", "#97c1a9", "#4451C5","#8155ba", "#c27ba0", "#E77E2F", "#8155ba", "#415d43", "#474973")) +
+  labs(x="Year", y="Median Rent($)", title="Median Gross Rent by Neighborhood in Brooklyn (2006-2021)", col = "Neighborhood") +
+  theme(legend.title = element_text(size = 10, face = "bold"), 
+               legend.text = element_text(size = 7),
+        plot.title = element_text(size = 11, face = "bold"))
+```
+
+```{r message=FALSE, warning=FALSE}
+diff_median_rent = read_csv(here("data", "clean_data", "clean_data_madie","diff_median_rent.csv"))
+
+ggplot(diff_median_rent, aes(x=unit_nums, y=diff)) +
+  geom_point(alpha=0.8, color = "#8155ba") + 
+  geom_smooth(method="lm", se=FALSE, color = "#4451C5") + 
+  geom_label_repel(label=diff_median_rent$Name, size = 2.5) +
+  labs(x="Number of 421a Units", y="Median Rent Increase($)", title="Linear Model of 421a Units Number and Median Rent Increase") +
+  theme(plot.title = element_text(size = 13, face = "bold"),
+        legend.title = element_text(size = 10, face = "bold"))
+```
+
+# Cara's Data Visualizations
+
+
+
+```{r message=FALSE, warning=FALSE}
+# Load Brooklyn gentrification census tract shp file
+shapefile <- st_read(here("data", "clean_data", "clean_data_cara", "bk_gent_levels.shp"))
+
+# Create list of color values for Brooklyn choropleth
+val <- c("#d8d5e8", "#aa93cb", "#005b6e","#8068a6", "#f9ce70","#ffaf5a" ,"#d64e00","#730000")
+
+# Create Brooklyn gentrification level choropleth
+ggplot(shapefile) +
+  geom_sf(aes(fill = Ty_1_19)) +
+  theme_void() +
+  theme(panel.grid = element_line(color = "transparent")) +
+  labs(title = "What areas have a high risk of gentrification?", fill="Gentrification Level") + 
+  theme(plot.title = element_text(size = 14, face = "bold"),
+        legend.title = element_text(size = 10, face = "bold")) +
+  scale_fill_manual(values=val,
+                    breaks = c("LI - Not Losing Low-Income Households",
+                               "LI - At Risk of Gentrification",
+                               "LI - Ongoing Displacement of Low-Income Households",
+                               "LI - Ongoing Gentrification",
+                               "MHI - Advanced Gentrification",
+                               "MHI - Stable Exclusion",
+                               "MHI - Ongoing Exclusion",
+                               "VHI - Super Gentrification or Exclusion" ),
+                    labels = c("Not Losing Low-Income Households", 
+                                "At Risk of Gentrification", 
+                               "Ongoing Displacement of Low-Income Households", 
+                              "Ongoing Gentrification", 
+                                "Advanced Gentrification", 
+                               "Stable Exclusion", 
+                                "Ongoing Exclusion", 
+                                "Super Gentrification or Exclusion"))
+```
+
+```{r message=FALSE, warning=FALSE}
+# Read clean csv file of Brooklyn census tract gentrification levels
+redlining_long <- read_csv(here("data", "clean_data", "clean_data_cara","bk_redlining_long.csv"), show_col_types = FALSE)
+
+# Plot barchart showing districts and their hazardous and declining levels
+ggplot(redlining_long, aes(x = boro_cd, y = Percent_value, fill = Category, label= Percent_value_label)) +
+  geom_bar(stat = "identity") +
+  geom_text(size = 2.5, position = position_stack(vjust = 0.5)) +
+  coord_flip() +
+  scale_fill_manual(values = c("#F58581", "#4451C5"), name = "Classification", labels = c("Declining", "Hazardous")) +
+  labs(y = "Percent", x="Community District", title="Redlining in Brooklyn") +
+  theme(plot.title = element_text(size = 10, face = "bold"),
+        legend.title = element_text(size = 10, face = "bold"))
+```
+
+```{r message=FALSE, warning=FALSE}
+# Read clean csv file of NYC's public housing developments
+public_dev <- read_csv(here("data", "clean_data", "clean_data_cara", "bk_public_developments.csv"), show_col_types = FALSE)
+# Plot barchart of public housing across boroughs
+ggplot(public_dev, aes(x = fct_infreq(BOROUGH))) + 
+geom_bar(stat = "count", fill = "#A1A8E2", color = "black")+
+labs(x="Borough", y="Development Count", title="Public Housing Developments Per Borough") +
+  theme(plot.title = element_text(size = 14, face = "bold"))
+```
+
+```{r message=FALSE, warning=FALSE}
+# Convert the public housing dataframe to an sf object
+sf_df <- st_as_sf(public_dev, wkt = "the_geom")
+
+# Create interactive map showing nyc public housing developments
+leaflet() %>%
+  addTiles() %>%
+  addPolygons(data = sf_df,
+              fillColor = "purple",
+              fillOpacity = 1,
+              color = "purple",
+              stroke = TRUE,
+              weight = 1,
+              popup = ~the_geom,
+              label=~DEVELOPMEN) %>%
+  addFullscreenControl()
+```
+
+# Grant's Data Visualizations
+
+```{r message=FALSE, warning=FALSE}
+# Load Brooklyn gentrification census tract shp file
+property_value_growth <- read_csv(here("data", "clean_data", "clean_data_grant", "property_value_growth.csv"))
+```
+
+
+```{r message=FALSE, warning=FALSE}
+ggplot(property_value_growth %>% filter(neighborhood == "GREENPOINT" | neighborhood == "BEDFORD STUYVESANT") %>% mutate(date_diff_days = date_diff / 86400) %>% filter(date_diff_days > 60), aes(x=`date_diff_days`, price_diff))+
+  geom_point(color = "#A1A8E2")+
+  geom_smooth(color = "black")+
+  facet_wrap(~neighborhood)+
+  labs(title = "Property Appreciation By Hold Time", x = "Time Held (days)", y = "Appreciation ($)")+
+  scale_y_continuous(trans='log10') +
+  theme(plot.title = element_text(size = 13, face = "bold"))
+```
+
+```{r message=FALSE, warning=FALSE}
+ggplot(property_value_growth %>% filter(neighborhood == "GREENPOINT" | neighborhood == "BEDFORD STUYVESANT") %>% mutate(date_diff_days = date_diff / 86400), aes(x=`date_diff_days`))+
+  geom_histogram(binwidth = 90, fill = "#A1A8E2", color = "black")+
+  facet_wrap(~neighborhood)+
+  labs(title = "Property Hold Times", x = "Time Held (days)", y = "Sales Count") +
+  theme(plot.title = element_text(size = 14, face = "bold"))
+```
+# Merwan's Data Visualizations
+
+
+#### Data Loading
+```{r message=FALSE, warning=FALSE}
+x <- read_csv(here("data", "clean_data", "clean_data_merwan", "NYC_Gentrification_2000_16_clean.csv"))
+housing <- read_csv(here("data", "clean_data", "clean_data_merwan", "HousingDB_post2010_clean.csv"))
+housing$Ownership <- as.factor(housing$Ownership)
+housing$Job_Type <- as.factor(housing$Job_Type)
+housing$Borough <- as.factor(housing$Borough)
+```
+
+## Background on Gentrification in Brooklyn
+```{r message=FALSE, warning=FALSE}
+ggplot(data=x[order(x$NHWPCTDIFF, decreasing=TRUE)[0:100],], aes(x=Borough)) +
+  geom_bar(fill = "#A1A8E2", color = "black") +
+  labs(y="Change in % Non-Hispanic White", 
+       title="100 Census Tracts with Greatest Difference in % Non-Hispanic White Pop. by Borough") +
+  theme(plot.title = element_text(size = 11, face = "bold"))
+```
+Figure **X.X**: Boroughs in which the census tracts with the largest change in %
+NHW population are located. Change in % NHW population is calculated by taking 
+NHW% in 2016 - NHW% in 2000.
+
+## Why Has Brooklyn Gentrified?
+
+### Zoning Policies
+
+```{r message=FALSE, warning=FALSE}
+ggplot(data=housing[housing$Borough=='Brooklyn',], aes(x=PermitYear, fill=Job_Type)) +
+  geom_bar() +
+  scale_fill_manual(values=c("#F58581","#97c1a9", "#4451C5"))+
+  labs(title="Job Type Breakdown per Borough per Year", x="Permit Year", y="Count") +
+  theme(plot.title = element_text(size = 12, face = "bold"),
+        legend.title = element_text(size = 10, face = "bold"))
+```
+Figure **X.X**: Housing jobs by job type in each Borough. Note the spike in
+new projects in Brooklyn soon after 2004, when new zoning policies were
+introduced.
+
+### Displacement of Public Housing
+
+```{r message=FALSE, warning=FALSE}
+gov_housing = housing[housing$`Ownership Abbrev`=='Government, City',]
+gov_housing = gov_housing[gov_housing$Borough != "Staten Island",]
+ggplot(data=gov_housing[gov_housing$Job_Type=='New Building',], aes(x=PermitYear, fill=Ownership)) +
+    labs(title="Government Ownership of Housing in Brooklyn", x="Permit Year", y="Cnt") +
+  geom_bar() +
+  scale_fill_manual(values=c("#F58581", "#E9C572", "#97c1a9", "#4451C5","#8155ba", "#c27ba0", "#E77E2F", "#8155ba", "#415d43", "#474973", "#c1121f")) +
+  facet_wrap(~Borough, scales='free', ncol=2) +
+  theme(plot.title = element_text(size = 12, face = "bold"),
+        legend.title = element_text(size = 10, face = "bold"))
+```
+
+Figure **X.X**: New construction of government owned housing projects by borough. Affordable housing is HPD (until 2015), NYCHA, and NYCHA/HHC. Note lack of new
+projects after 2015 in Brooklyn compared with other Boroughs.
+
+### Real Estate Speculation
+```{r message=FALSE, warning=FALSE}
+individ_housing = housing[housing$`Ownership Abbrev`=='Private For-Profit',]
+individ_housing = individ_housing[individ_housing$Borough != "Staten Island",]
+ggplot(data=individ_housing[individ_housing$Job_Type=='New Building',], aes(x=PermitYear, fill=`Ownership`)) +
+  geom_bar(position='fill') +
+  scale_fill_manual(values=c("#F58581", "#E9C572", "#97c1a9", "#4451C5","#8155ba", "#c1121f"))+
+  labs(title="Ownership of Private For-Profit Housing", x="Permit Year", y="Cnt") +
+  facet_wrap(~Borough, ncol=2, scales = 'free') +
+  theme(plot.title = element_text(size = 12, face = "bold"),
+        legend.title = element_text(size = 10, face = "bold"))
+```
+Figure **X.X**: Percent ownership of private for-profit housing in NYC. Note the
+decreasing share of individually owned properties in Brooklyn.

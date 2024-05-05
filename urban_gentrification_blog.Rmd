@@ -1,0 +1,560 @@
+---
+title: Urban Gentrification
+author: Madie Tong, Antoinette Tan, Cara Mulrooney, Grant Miner, Merwan Yeditha
+output:
+  rmdformats::downcute
+
+---
+```{r setup, include=FALSE}
+library(tidycensus)
+library(sf)
+library(tidyverse)
+library(here)
+library(ggplot2)
+library(ggmap)
+library(prettydoc)
+library(egg) 
+library(plotly)
+library(ggiraph)
+library(ggrepel)
+library(leaflet)
+library(leaflet.extras)
+library(knitr)
+
+knitr::opts_chunk$set(tidy = FALSE, message=FALSE, cache.extra = packageVersion('tufte'))
+options(htmltools.dir.version = FALSE)
+```
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+#  Read CSV File
+csv_clean_data <- read_csv(here("data", "clean_data", "clean_data_ant", "transportation_clean_data_csv.csv"))
+#  Read Shape File
+transportation_clean_data <- st_read(here("data", "clean_data", "clean_data_ant", "transportation_clean_data_shp.shp"), quiet=TRUE)
+#  Replace Column abbr Names in Shape File with full name from CSV
+colnames(transportation_clean_data) <- colnames(csv_clean_data)
+
+transit_points <- st_read(here("data", "clean_data", "clean_data_ant", "transit_points.shp"), quiet=TRUE)
+
+x <- read_csv(here("data", "clean_data", "clean_data_merwan", "NYC_Gentrification_2000_16_clean.csv"))
+
+housing <- read_csv(here("data", "clean_data", "clean_data_merwan", "HousingDB_post2010_clean.csv"))
+
+borough_median_rent = read_csv(here("data", "clean_data", "clean_data_madie", "borough_median_rent.csv"))
+
+# Read clean csv file of Brooklyn census tract gentrification levels
+redlining_long <- read_csv(here("data", "clean_data", "clean_data_cara","bk_redlining_long.csv"), show_col_types = FALSE)
+
+residential_developments = read_csv(here("data", "clean_data", "clean_data_madie","residential_developments.csv"))
+
+brooklyn_median_rent = read_csv(here("data", "clean_data", "clean_data_madie","brooklyn_median_rent.csv"))
+
+units_low_income_421a = read_csv(here("data", "clean_data", "clean_data_madie","units_low_income_421a.csv"))
+
+diff_median_rent = read_csv(here("data", "clean_data", "clean_data_madie","diff_median_rent.csv"))
+
+# Read clean csv file of NYC's public housing developments
+public_dev <- read_csv(here("data", "clean_data", "clean_data_cara", "bk_public_developments.csv"), show_col_types = FALSE)
+
+# Load Brooklyn gentrification census tract shp file
+property_value_growth <- read_csv(here("data", "clean_data", "clean_data_grant", "property_value_growth.csv"))
+
+# Load Brooklyn gentrification census tract shp file
+shapefile <- st_read(here("data", "clean_data", "clean_data_cara", "bk_gent_levels.shp"), quiet = TRUE)
+```
+
+# Introduction to Urban Gentrification in Brooklyn, New York
+
+Brooklyn, once an emblem of cultural diversity and resilience, now stands at the forefront of urban transformation. From its humble beginnings as a haven for immigrants and working-class families to its current status as a hotspot for upscale living and commercial development, the borough's journey reflects the ebb and flow of societal shifts^[https://takerootjustice.org/wp-content/uploads/2019/06/oob_31jul08.pdf].
+
+Motivation for our exploration into Brooklyn's evolution stems from the profound changes witnessed over recent decades. The borough has undergone a marked demographic shift, with historically Black neighborhoods experiencing an influx of higher-income residents^[https://medium.com/@ew2574/historically-black-central-brooklyn-is-whiter-than-ever-b4bd63f8b9ee]. This transformation, commonly termed gentrification, has reshaped the social and economic landscape, raising questions about its origins.
+
+Central to our investigation is the recognition that gentrification is not a monolithic phenomenon but a multifaceted process deeply rooted in historical legacies, economic forces, and policy decisions. By examining the historical trajectory of Brooklyn, tracing the patterns of demographic change, and scrutinizing the policies and practices that shape urban development, we aim to unravel the complex web of factors driving gentrification.
+
+Thus, our research question emerges: What historical, economic, and policy factors have contributed to the gentrification of Brooklyn?
+
+Through literary research, we've identified five main driving factors of gentrification^[https://eastnewyork.com/east-new-york-is-up-next-for-gentrification-through-progressivism/#:~:text=In%20the%20case%20of%20Brooklyn,a%20role%20in%20gentrifying%20Brooklyn.]. These factors are summarized in Figure 1 and are discussed throughout the rest of this article. 
+
+```{r echo=FALSE, fig.cap="Figure 1: Driving factors of gentrification.", out.width = '100%'}
+include_graphics(here("images", "driving_factors.png"))
+```
+
+Through this exploration, we seek not only to understand the past and present dynamics but also to inform future urban planning efforts, advocating for equitable development that preserves the diverse fabric of Brooklyn's communities while fostering vibrant and inclusive retail environments.
+
+To reproduce the findings found in this article yourself, please refer to the GitHub repository found at this link: https://github.com/olincollege/urban_gentrification.
+
+## Gentrification and Sustainability
+
+Our research is grounded in the sustainability imperatives outlined by the United Nations Sustainable Development Goals (SDGs), particularly Goals 1 (No Poverty), 3 (Good Health and Well-Being), 10 (Reduced Inequalities), and 11 (Sustainable Cities and Communities).^[https://sdgs.un.org/goals]. These goals provide a framework for understanding and addressing the multifaceted challenges posed by gentrification in Brooklyn. For instance, as gentrification often exacerbates economic disparities and contributes to the displacement of marginalized communities, our investigation into its causes and impacts directly aligns with the SDG 1 goal of poverty reduction and SDG 10 goal of reducing inequalities. Additionally, the SDG 11 goal of sustainable cities and communities underscores the importance of urban development that promotes inclusivity, resilience, and environmental sustainability, concepts that are central to our inquiry.
+
+Furthermore, our research is guided by the principles of a Just Transition, as advocated by the Climate Justice Alliance.^[https://climatejusticealliance.org/just-transition/] These principles emphasize the equitable redistribution of resources and power, aiming to address and transform existing social inequities based on race, class, gender, and other forms of oppression. By examining the historical, economic, and policy factors driving gentrification in Brooklyn, we seek to uncover the systemic injustices perpetuated by current urban development paradigms and explore pathways towards more just and sustainable outcomes. In doing so, our research not only contributes to the broader discourse on urban sustainability but also advances efforts to create communities that are equitable, inclusive, and environmentally resilient.
+
+# Background on Gentrification in Brooklyn
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+housing$Ownership <- as.factor(housing$Ownership)
+housing$Job_Type <- as.factor(housing$Job_Type)
+housing$Borough <- as.factor(housing$Borough)
+```
+
+```{r message=FALSE, echo=FALSE, warning=FALSE, fig.cap="Figure 2: Line Graph of Median Gross Rent  by NYC’s Boroughs from 2006-2021", out.width = '100%'}
+
+ggplot(borough_median_rent, aes(x=year, y=value, color=Name, group=Name))+
+  geom_point(size = 2)+
+  geom_line(linewidth=1)+
+  scale_color_manual(values = c("#F58581", "#E9C572", "#97c1a9", "#4451C5","#8155ba")) +
+  labs(x="Year", y="Rent ($)", title="Median Gross Rent by Borough (2006-2021)") +
+  theme(plot.title = element_text(size = 15, face = "bold"),
+        legend.title = element_text(size = 10, face = "bold"))
+
+```
+
+In this article, we've decided to hone in on Brooklyn out of all of the New York City boroughs. The reason for this is because of its heightened level of gentrification when compared to other New York City boroughs. Figure 2 depicts the median gross rent of a unit by borough over the years 2006-2021. As we may expect, each borough has generally increased in rent since 2006. Staten Island uniquely has seen fluctuations in the gross rent, though ultimately it has still increased. However an outliar amongst the boroughs is Brooklyn, whose slope is notably far steeper than the other boroughs, shifting from one of the least expensive borough to live in to one of the most expensive.
+
+```{r message=FALSE, warning=FALSE, echo=FALSE, fig.cap="Figure 3: Boroughs in which the census tracts with the largest change in % NHW population are located. Change in % NHW population is calculated by taking NHW% in 2016 - NHW% in 2000.", out.width = '100%'}
+ggplot(data=x[order(x$NHWPCTDIFF, decreasing=TRUE)[0:100],], aes(x=Borough)) +
+  geom_bar(fill = "#A1A8E2", color = "black") +
+  labs(y="Change in % Non-Hispanic White", 
+       title="100 Census Tracts with Greatest Difference in % Non-Hispanic White Pop. by Borough") +
+  theme(plot.title = element_text(size = 11, face = "bold"))
+```
+
+In addition, Figure 3 shows that Brooklyn has had the greatest difference in percent of non-hispanic white people out of all the NYC boroughs from 2016 to 2020, adding evidence to its heightened gentrification. 
+
+Throughout the rest of this article, maps of Brooklyn are presented. Please refer to Figure 4 to see neighborhood names. Note that certain neighborhoods of note are highlighted in color. These are places that are zoned in on in different parts of the rest of the report. 
+
+```{r message=FALSE, warning=FALSE, echo=FALSE, fig.cap="Figure 4: Interactive map showing Brooklyn neighborhood names. Neighborhoods of note are shown in color. ", out.width = '100%'}
+gg <- ggplot(transportation_clean_data) +
+  geom_sf(aes(fill=NTAName)) +
+  theme_minimal() +
+  ggtitle("Neighborhood Names") +
+  geom_sf_label_interactive(aes(label = NTAName, tooltip = NTAName),
+                            size = 1.5) + 
+  scale_fill_manual(values = c("Greenpoint" = "#97c1a9", "Williamsburg" = "#F58581", "Downtown Brooklyn-DUMBO-Boerum Hill"= "#E9C572", "Bedford-Stuyvesant (West)" = "#4451C5", "Bedford-Stuyvesant (East)" = "#8155ba", na.value = "antiquewhite")) +
+  theme(panel.background = element_rect(fill = "aliceblue"),
+        axis.title=element_blank(),
+        axis.text = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks = element_blank(),
+        panel.grid.major = element_blank(),
+        plot.title = element_text(size = 20, face = "bold", hjust=.5),)
+
+girafe(ggobj = gg)
+```
+
+
+```{r pressure, echo=FALSE, fig.cap="Figure 5: Displacement and Gentrification Census Tract Categories Based on Income Level.^[https://www.urbandisplacement.org/maps/new-york-gentrification-and-displacement/] ^[https://www.urbandisplacement.org/wp-content/uploads/2021/07/udp_methodology_for_ny_-_jan_2019.pdf]", out.width = '100%'}
+include_graphics(here("images", "census_typology.jpg"))
+```
+
+Brooklyn neighborhoods are experiencing differing levels of displacement, as wages of low-income residents and housing prices has resulted in the area to have experienced significant demographic shifts in recent years. UC-Berkley and NYU’s Center for Urban Science and Progress analyzed regional data on housing, income, and other demographics to understand and predict what areas are or will be gentrified in the near future. 
+Figure 5, which display several categories indicating the level to which census tracts are being displaced and gentrified, references “Low Income” and “Moderate to High Income” in the Typology section. Here, “Low Income” means a median household income at 80% of the regional median, and “Moderate to High Income” is a median household income at 80% of the regional median or above. The three main types of typologies depicted in Figure 5 are displacement, gentrification, and exclusion. Displacement refers to the process by which individuals are forced to leave their homes due to rising living costs. In gentrification, neighborhoods have an influx of new, wealthier residents and businesses, resulting in increased property values and changes in the neighborhood demographics. Exclusion is the process that creates economic barriers to housing access for groups, often based on income, race, ethnicity, or other demographic factors.^[https://www.urbandisplacement.org/wp-content/uploads/2021/07/udp_methodology_for_ny_-_jan_2019.pdf]
+
+
+```{r message=FALSE, warning=FALSE, echo=FALSE, fig.cap="Figure 6: Choropleth of Brooklyn’s Displacement and Gentrification in Each Census Tract, based on the tract income level categories depicted in Figure 5.", out.width = '100%'}
+
+# Create list of color values for Brooklyn choropleth
+val <- c("#d8d5e8", "#aa93cb", "#005b6e","#8068a6", "#f9ce70","#ffaf5a" ,"#d64e00","#730000")
+
+# Create Brooklyn gentrification level choropleth
+ggplot(shapefile) +
+  geom_sf(aes(fill = Ty_1_19)) +
+  theme_void() +
+  theme(panel.grid = element_line(color = "transparent")) +
+  labs(title = "What areas have a high risk of gentrification?", fill="Gentrification Level") + 
+  theme(plot.title = element_text(size = 14, face = "bold"),
+        legend.title = element_text(size = 10, face = "bold")) +
+  scale_fill_manual(values=val,
+                    breaks = c("LI - Not Losing Low-Income Households",
+                               "LI - At Risk of Gentrification",
+                               "LI - Ongoing Displacement of Low-Income Households",
+                               "LI - Ongoing Gentrification",
+                               "MHI - Advanced Gentrification",
+                               "MHI - Stable Exclusion",
+                               "MHI - Ongoing Exclusion",
+                               "VHI - Super Gentrification or Exclusion" ),
+                    labels = c("Not Losing Low-Income Households", 
+                                "At Risk of Gentrification", 
+                               "Ongoing Displacement of Low-Income Households", 
+                              "Ongoing Gentrification", 
+                                "Advanced Gentrification", 
+                               "Stable Exclusion", 
+                                "Ongoing Exclusion", 
+                                "Super Gentrification or Exclusion"))
+```
+
+Using the typology used in Figure 5, Figure 6 shows a choropleth of the gentrification level of each census tract, where the data was last updated in 2019. Red Hook, Bay Ridge, Fort Hamilton, Mill Basin, Bergen Beach, Canarsie, and part of East New York neighborhoods are mostly in the “Stable Exclusion” phase. Bushwick, Bedford-Stuyvesant, and Crown Heights are classified as “Ongoing Gentrification.” Greenpoint, Cobble Hill, Carroll Gardens, Gowanus, and Park Slope are very gentrified and are classified as “Ongoing Exclusion,” only to be surpassed by Dumbo as “Super Gentrification or Exclusion,” as the most gentrified neighborhood in Brooklyn.
+
+
+# Why has Brooklyn Gentrified?
+
+Gentrification can be driven by various factors, many of them being intertwined. In our research we've identified five leading factors that may have lead to gentrification in Brooklyn. These factors and their supporting stories/visualizations are discussed in the sections below and are summarized in the graphic in Figure 1.
+
+## Zoning Policies
+
+```{r message=FALSE, warning=FALSE, echo=FALSE, fig.cap="Figure 7: Barchart of the percent that each community district residential area was classified “Declining” or “Hazardous”.^[https://a816-dohbesp.nyc.gov/IndicatorPublic/data-stories/redlining/]"}
+
+
+# Plot barchart showing districts and their hazardous and declining levels
+ggplot(redlining_long, aes(x = boro_cd, y = Percent_value, fill = Category, label= Percent_value_label)) +
+  geom_bar(stat = "identity") +
+  geom_text(size = 2.5, position = position_stack(vjust = 0.5)) +
+  coord_flip() +
+  scale_fill_manual(values = c("#F58581", "#4451C5"), name = "Classification", labels = c("Declining", "Hazardous")) +
+  labs(y = "Percent", x="Community District", title="Redlining in Brooklyn") +
+  theme(plot.title = element_text(size = 10, face = "bold"),
+        legend.title = element_text(size = 10, face = "bold"))
+```
+
+Redlining was a discriminatory practice employed by the federal government and banks in the 1930s, during the Great Depression, aimed at determining loan guarantees based on neighborhood characteristics and residents' race. The Home Owners Loan Corporation (HOLC) created "residential security maps" that classified neighborhoods into categories such as “Best,” “Still Desirable,” “Definitely Declining,” and “Hazardous,” with racialized descriptions like "infiltration of Negroes" used to designate areas as lower value. This practice systematically denied people of color access to mortgage loans, perpetuating racial segregation and depriving them of resources and opportunities available to white residents. Redlining concentrated people of color in underinvested neighborhoods while providing more resources and opportunities to white residents, reinforcing systemic racism and perpetuating economic disparities^[https://a816-dohbesp.nyc.gov/IndicatorPublic/data-stories/redlining/]. Many areas of Brooklyn were redlined, and Figure 7 shows the percentage each community district was classified as “Declining” and “Hazardous.” The areas that were identified to be the most “Hazardous” were Bedford-Stuyvesant, Greenpoint and Williamsburg, Brownsville, Fort Greene and Brooklyn Heights, and Park Slope and Carroll Gardens. Meanwhile Borough Park, Bensonhurst, Sunset Park, Bushwick, Crown Heights and Prospect Heights.
+
+## Tax Incentives
+
+One factor that may have heavily spurred gentrification in NYC, and particularly Brooklyn, is tax exemption programs created by the government that provide benefits to developers creating new residential units. In order to stimulate the housing market and incentivize developers to create housing options suitable for lower income citizens, several tax exemption policies were created that would partially exempt developers from property taxes on properties that were enrolled in the program. One common tax exemption program is 421a; in order to qualify, the property must have a certain percentage (roughly 25% or higher) of units set aside for affordable housing/low-middle income households and set them to prices that are affordable for families earning up to a certain percentage of AMI (Area Median Income). 
+
+
+```{r message=FALSE, warning=FALSE, echo=FALSE, fig.cap="Figure 8: Bar Graph depicting Housing Units qualified for varying tax exemption programs per borough"}
+
+ggplot(residential_developments, aes(x=tax_type, y = units, fill=borough))+
+  geom_col(position="dodge") +
+  scale_fill_manual(values = c("#F58581", "#E9C572", "#97c1a9", "#4451C5","#8155ba")) +
+  labs(x="Tax Exemption Type",y= "Number of Units per Borough", title="Units per Borough Qualified for Property Tax Exemption Completed (2010-2020)") +
+  theme(plot.title = element_text(size = 10, face = "bold", hjust=.5),
+        legend.title = element_text(size = 10, face = "bold")) 
+
+```
+
+Many criticize the 421a tax exemption program, claiming that despite the program's intent to increase affordability of rent, it may have the opposite effect. This may be due to some developers taking advantage of the requirement to set housing prices based on the area’s AMI and raise the rent to cater to those households who earn 120-130 percent of AMI. 
+
+```{r message=FALSE, warning=FALSE, echo=FALSE, fig.cap="Figure 9: Line Graph depicting Median Gross Rent by Neighborhood in Brooklyn "}
+
+# Filter data for year 2021
+brooklyn_median_rent_2021 <- brooklyn_median_rent %>%
+  filter(year == 2021)
+
+# Identify the 10 names with the highest rent values in 2021
+top_10_names <- brooklyn_median_rent_2021 %>%
+  arrange(desc(rent)) %>%
+  slice_head(n = 10) %>%
+  pull(Name)
+
+# Filter original data for the top 10 names
+brooklyn_median_rent_top_10 <- brooklyn_median_rent %>%
+  filter(Name %in% top_10_names)
+
+ggplot(brooklyn_median_rent_top_10, aes(x=year, y=rent, group=Name, color=Name)) +
+  geom_point(size=2)+
+  geom_line(linewidth=1)+
+  scale_color_manual(values=c("#F58581", "#E9C572", "#97c1a9", "#4451C5","#8155ba", "#c27ba0", "#E77E2F", "#8155ba", "#415d43", "#474973")) +
+  labs(x="Year", y="Median Rent($)", title="Median Gross Rent by Neighborhood in Brooklyn (2006-2021)", col = "Neighborhood") +
+  theme(legend.title = element_text(size = 10, face = "bold"), 
+               legend.text = element_text(size = 7),
+        plot.title = element_text(size = 11, face = "bold"))
+```
+
+A majority of Brooklyn neighborhoods have a similar, steady increase in median rent over the years, such as Flatlands, Boroughs Park, Sheepshead Bay etc. Williamsburg and Brooklyn Heights, on the other hand, have had a steeper shift in rent; both had been on par with the median rents of other Brooklyn neighborhoods in 2006, but ultimately are now amongst the top 3 most expensive neighborhoods. 
+
+```{r message=FALSE, warning=FALSE, echo=FALSE, fig.cap="Figure 10: Bar Graph depicting difference between low income units and 421a tax units per borough built between 2010-2021"}
+
+ggplot(units_low_income_421a, aes(x=borough,y=value, fill=unit_type)) + 
+  geom_bar(stat="identity", position="identity", alpha=.5)+
+  scale_fill_manual(values = c("#F58581", "#4451C5")) +
+  labs(x="Borough", y="Number of Units", title="Low Income and 421a Qualified Units per Borough (2010-2020)", color="Unit Type") +
+  theme(plot.title = element_text(size = 11, face = "bold"),
+        legend.title = element_text(size = 10, face = "bold"))
+```
+
+Figure 10 was created by joining two datasets from NYU’s Furman Center and summing over the total number of each unit type for each borough. The total number of low income units per borough was overlaid over the total number of 421a qualified units per borough. The Furman Center defines low income units in this dataset as any unit “targeted to households that earn less than/equal to 80% AMI.” This would include units that are also 421a qualified. 
+
+
+Comparing each borough’s ratio of 421a-qualified units and low income units, we see that the borough with the largest disparity between 421a units and low-income is clearly Brooklyn, which has an incredibly large number of 421a built units in comparison to the number of low income ones. Brooklyn also has the largest population of the boroughs. We cannot necessarily draw any conclusions from this graph that the 421a exemption program is causing gentrification in Brooklyn, especially since this dataset only shows the total number of units built between 2010 and 2021, and does not include more detail on how these ratios have changed. However, it is interesting to compare Brooklyn’s ratio to other boroughs since the gap is much larger. 
+
+```{r message=FALSE, warning=FALSE, echo=FALSE, fig.cap="Figure 11: Linear Model of Number of 421a Units in Brooklyn’s Community Districts and the Median Rent Increase since 2006 to 2021"}
+
+ggplot(diff_median_rent, aes(x=unit_nums, y=diff)) +
+  geom_point(alpha=0.8, color = "#8155ba") + 
+  geom_smooth(method="lm", se=FALSE, color = "#4451C5") + 
+  geom_label_repel(label=diff_median_rent$Name, size = 2.5) +
+  labs(x="Number of 421a Units", y="Median Rent Increase($)", title="Linear Model of 421a Units Number and Median Rent Increase") +
+  theme(plot.title = element_text(size = 13, face = "bold"),
+        legend.title = element_text(size = 10, face = "bold"))
+```
+
+Figure 11 was created by joining together two separate datasets from the Furman Center’s datahub CoreData. The median rent data originally contained the values of rent per community district across the years 2006-2021, so in order to calculate the rent increase across this time period, the difference was taken for the rent value of 2021 and 2006 for each community district. The total number of 421a units built was already for the year 2021. After fitting a linear model to the two variables, we can see that there is a positive correlation with relatively small residuals. This indicates that the correlation between a community district having a large number of 421a units and the median rent increasing is strong. With the data, however, we cannot make any conclusions about causation. However, it is also important to note that there are only 18 data points, one for each community district. Ideally, we would be able to have more data points to strengthen our conclusion. 
+
+## Displacement of Public Housing
+
+```{r message=FALSE, warning=FALSE, echo=FALSE, fig.cap="Figure 12: Barchart showing the number of public housing developments in each of the five boroughs of NYC^[https://data.cityofnewyork.us/Housing-Development/NYCHA-Public-Housing-Developments/phvi-damg/about_data]"}
+
+# Plot barchart of public housing across boroughs
+ggplot(public_dev, aes(x = fct_infreq(BOROUGH))) + 
+geom_bar(stat = "count", fill = "#A1A8E2", color = "black")+
+labs(x="Borough", y="Development Count", title="Public Housing Developments Per Borough") +
+  theme(plot.title = element_text(size = 14, face = "bold"))
+```
+
+As shown by Figure 12, Brooklyn offers just over 60 public housing developments, despite having the largest population of the five boroughs at 2,600,000+ people^[https://metropolismoving.com/blog/new-york-city-population-in-2022/]. The Bronx has a much lower population of 1.5 million, and Manhattan has 1.7 million people. Brooklyn also has the second largest land area of the boroughs at 71 square miles, following Queens at 109 square miles^[https://www.nymtc.org/portals/0/pdf/CPT-HSP/NYMTC%20coord%20plan%20NYC%20CH03.pdf]. Considering the abundance of people that live in Brooklyn and the large amount of land available, this borough should surpass Manhattan and the Bronx in public housing developments.
+
+```{r message=FALSE, warning=FALSE, echo=FALSE, fig.cap="Figure 13: Interactive map showing all public housing developments across all five boroughs^[https://data.cityofnewyork.us/Housing-Development/NYCHA-Public-Housing-Developments/phvi-damg/about_data]"}
+# Convert the public housing dataframe to an sf object
+sf_df <- st_as_sf(public_dev, wkt = "the_geom")
+
+# Create interactive map showing nyc public housing developments
+leaflet() %>%
+  addTiles() %>%
+  addPolygons(data = sf_df,
+              fillColor = "purple",
+              fillOpacity = 1,
+              color = "purple",
+              stroke = TRUE,
+              weight = 1,
+              popup = ~the_geom,
+              label=~DEVELOPMEN) %>%
+  addFullscreenControl()
+```
+
+As shown in Figure 13, Brooklyn severely lacks public housing developments, especially in the bottom half and center of the borough. Some public housing is available in Coney Island, Brownsville, Canarsie, Bedford-Stuyvesant, and Downtown Brooklyn.
+
+```{r message=FALSE, warning=FALSE, echo=FALSE, fig.cap="Figure 14: New construction of government owned housing projects by borough. Affordable housing is HPD (until 2015), NYCHA, and NYCHA/HHC. Note lack of new projects after 2015 in Brooklyn compared with other Boroughs."}
+gov_housing = housing[housing$`Ownership Abbrev`=='Government, City',]
+gov_housing = gov_housing[gov_housing$Borough != "Staten Island",]
+ggplot(data=gov_housing[gov_housing$Job_Type=='New Building',], aes(x=PermitYear, fill=Ownership)) +
+    labs(title="Government Ownership of Housing in Brooklyn", x="Permit Year", y="Cnt") +
+  geom_bar() +
+  scale_fill_manual(values=c("#F58581", "#E9C572", "#97c1a9", "#4451C5","#8155ba", "#c27ba0", "#E77E2F", "#8155ba", "#415d43", "#474973", "#c1121f")) +
+  facet_wrap(~Borough, scales='free', ncol=2) +
+  theme(plot.title = element_text(size = 12, face = "bold"),
+        legend.title = element_text(size = 10, face = "bold"))
+```
+
+Note on the above plots: HPD seems to have changed designation to NYCHA after 2015, but there is none of either in Brooklyn as far as new buildings or alterations since 2015. All the other boroughs have some alteration or new construction for NYCHA past 2015. (HPD and NYCHA are affordable housing initiatives).
+
+## Real Estate Speculation
+
+
+```{r message=FALSE, warning=FALSE, echo=FALSE, fig.cap="Figure 15: Percent ownership of private for-profit housing in NYC. Note the decreasing share of individually owned properties in Brooklyn."}
+individ_housing = housing[housing$`Ownership Abbrev`=='Private For-Profit',]
+individ_housing = individ_housing[individ_housing$Borough != "Staten Island",]
+ggplot(data=individ_housing[individ_housing$Job_Type=='New Building',], aes(x=PermitYear, fill=`Ownership`)) +
+  geom_bar(position='fill') +
+  scale_fill_manual(values=c("#F58581", "#E9C572", "#97c1a9", "#4451C5","#8155ba", "#c1121f"))+
+  labs(title="Ownership of Private For-Profit Housing", x="Permit Year", y="Cnt") +
+  facet_wrap(~Borough, ncol=2, scales = 'free') +
+  theme(plot.title = element_text(size = 12, face = "bold"),
+        legend.title = element_text(size = 10, face = "bold"))
+```
+
+Interesting trend in Figure 15 is that new buildings that are individually owned have been going down over the years as a % of the total new houses. Compared to other boroughs (Bronx and Queens) this trend is unique to Brooklyn. This points to the fact that in Brooklyn, most new houses are owned by corporations and partnerships, pointing to real estate speculation that can drive out families from their properties. (Alterations and demolitions are also high for individually owned houses but that persists across all boroughs). Also Manhattan has so few new individually owned buildings…
+
+
+Real estate speculation involves the practice of treating property or housing as a financial investment and not as a purchase of a place to live. While speculation can take the form of buying land well in advance of anticipated development, we will focus on a narrower slice of this world: house flipping. House flippers purchase a house, renovate or retrofit it to update its design, and resell it for profit, hopefully making more than enough money to offset the upgrades. 
+
+A common policy practice used by local governments to reduce the influence of flipping on the housing market is an elevated tax on properties sold under a minimum amount of time. A key indicator of flipping, then, would be a large number of properties sold within a shorter range of time. Most likely flipping sales would happen three months to a year after they were first purchased to give time for the renovations to occur.
+
+
+
+```{r message=FALSE, warning=FALSE, echo=FALSE, fig.cap="Figure 16: Property hold times in the Bedford Stuyvesant neighborhood of Brooklyn for properties that were sold at least twice between January 1, 2013 and December 31, 2023.^[https://www.nyc.gov/site/finance/property/property-rolling-sales-data.page]"}
+ggplot(property_value_growth %>% filter(neighborhood == "GREENPOINT" | neighborhood == "BEDFORD STUYVESANT") %>% mutate(date_diff_days = date_diff / 86400), aes(x=`date_diff_days`))+
+  geom_histogram(binwidth = 90, fill = "#A1A8E2", color = "black")+
+  facet_wrap(~neighborhood)+
+  labs(title = "Property Hold Times", x = "Time Held (days)", y = "Sales Count") +
+  theme(plot.title = element_text(size = 14, face = "bold"))
+```
+
+When comparing the differences between consecutive property sale dates in Bedford Stuyvesant, the short term holding phenomena becomes clear. Even when ignoring the first two bars, which represent the first three months after the first purchase, the trend is clear that properties are held for a comparatively shorter time than in other places. Greenpoint, however, does not display a similar skew toward lower hold times. 
+
+There is significant deviation between gentrification status, prevailing sentiment, and the evidence of house flipping. Measuring price changes as a function of hold time can reveal whether house flippers are getting outsize value for their homes by turning them around so quickly instead of waiting for the market to improve years into the future. A flatter correlation could suggest that flippers are making a similar return on their investment to homeowners who hold onto them longer.
+
+```{r message=FALSE, warning=FALSE, echo=FALSE, fig.cap="Figure 17: Appreciation data by how long the property was held. Vertical axes are log scale to better illustrate distribution. Data was filtered for hold times greater than 60 days. [ibid]"}
+ggplot(property_value_growth %>% filter(neighborhood == "GREENPOINT" | neighborhood == "BEDFORD STUYVESANT") %>% mutate(date_diff_days = date_diff / 86400) %>% filter(date_diff_days > 60), aes(x=`date_diff_days`, price_diff))+
+  geom_point(color = "#A1A8E2")+
+  geom_smooth(color = "black")+
+  facet_wrap(~neighborhood)+
+  labs(title = "Property Appreciation By Hold Time", x = "Time Held (days)", y = "Appreciation ($)")+
+  scale_y_continuous(trans='log10') +
+  theme(plot.title = element_text(size = 13, face = "bold"))
+```
+
+Neither of the plots in Figure 17 clearly reveals a very strong correlation between the housing price and the time held. This supports the narrative that gentrification is occurring because flippers are experiencing similar appreciation to that of those who have held their houses for much longer. 
+
+## Transportation Infrastructure
+
+
+
+Upon research of transportation and gentrification, it is found that the literature is split on the relation between transportation and gentrification.An article from Bloomberg studied whether transit corridors contribute to the displacement of low-income households.^[https://www.bloomberg.com/news/articles/2015-07-23/subway-and-bus-stops-are-not-the-cause-of-gentrification-in-new-york?embedded-checkout=true
+]. Although there is an initial correlation between high incomes and access to subway stops, a more detailed analysis showed that transit access is not the primary factor driving changes in neighborhood income levels between 2000 and 2010. Instead, other factors such as population growth, racial diversity, education levels, and proximity to central business districts play more significant roles. The study highlights the importance of transit for less advantaged groups and suggests that a lack of transit access can hinder economic opportunities for these groups.
+
+Another study from University of Texas, Austin^[https://www.mdpi.com/2073-445X/12/2/358] examined the relationship between gentrification and public transit service in the New York–Northern New Jersey–Long Island area. It identified higher rates of transit deserts (areas with limited transit service) in economically disadvantaged neighborhoods and highlighted the significant impact of transit services on gentrification progress. However, the study also noted that transit services have insignificant effects on super-gentrification. Policymakers are urged to allocate public transit budgets carefully to avoid displacement while meeting the transit needs of different socioeconomic groups. 
+
+To corroborate information found in these articles, Figures 18 and 19 were created to explore the relationship between subway station count per neighborhood in Brooklyn and different factors that indicate the occurrence of gentrification.
+
+```{r message=FALSE, warning=FALSE, fig.height=8*2, fig.width=8*2, echo=FALSE, fig.cap="Fig 18. Map of subway count by neighborhood along with three factors that are often a sign of gentrification. Each map is overlaid with subway transit points."}
+subway_map <- transportation_clean_data %>%
+  ggplot() +
+  geom_sf(aes(fill = sub_count), color = "#8f98aa") +
+  geom_sf(data = transit_points, size = 1.5) +
+  scale_fill_gradientn(colors=c("#FCF5EE","#b5cbcf","#55717b","#0a4260"), na.value="#D6D6D6") +
+  # https://www.color-hex.com/color-palette/100132
+  theme_minimal() +
+  ggtitle("Subway Count \nby Neighborhood")+ 
+  theme(axis.text = element_blank(),
+        panel.grid.major = element_line("transparent"),
+        plot.title = element_text(size = 40, face = "bold", hjust=.5),
+        legend.key.width = unit(.5, "in"),
+        legend.title = element_text(size = 25, face="bold", family="DIN Condensed"), 
+        legend.position = "bottom" ,
+        legend.text = element_text(size = 20, face="bold", family="DIN Condensed"))+
+  guides(fill = guide_colourbar(title = "Number of Subway Stations", title.position="top", title.hjust = 0.5))
+
+rent_map <- transportation_clean_data %>%
+  ggplot() +
+  geom_sf(aes(fill = mean_rent), color = "#8f98aa") +
+  geom_sf(data = transit_points, size = 1.5) +
+  scale_fill_gradientn(colors = c("#FCF5EE","#beafc2", "#8155ba", "#695e93")) +
+  # https://www.color-hex.com/color-palette/1044873
+  theme_minimal() +
+  ggtitle("Mean Rent \nby Neighborhood")+ 
+  theme(axis.text = element_blank(),
+        panel.grid.major = element_line("transparent"),
+        plot.title = element_text(size = 40, face = "bold", hjust=.5),
+        legend.key.width = unit(.5, "in"),
+        legend.title = element_text(size = 25, face="bold", family="DIN Condensed"), 
+        legend.position = "bottom" ,
+        legend.text = element_text(size = 20, face="bold", family="DIN Condensed"))+
+    guides(fill = guide_colourbar(title = "Dollars", title.position="top", title.hjust = 0.5))
+
+evict <- transportation_clean_data %>%
+  ggplot() +
+  geom_sf(aes(fill = eviction_count), color = "#8f98aa")+
+  geom_sf(data = transit_points, size = 1.5) +
+  scale_fill_gradientn(colors = c("#FCF5EE", "#cce2cb", "#b6cfb6","#97c1a9")) +
+  # https://www.color-hex.com/color-palette/1044832
+  theme_minimal() +
+  ggtitle("Eviction Counts \nby Neighborhood")+ 
+  theme(axis.text = element_blank(),
+        panel.grid.major = element_line("transparent"),
+        plot.title = element_text(size = 40, face = "bold", hjust=.5),
+        legend.key.width = unit(.5, "in"),
+        legend.title = element_text(size = 25, face="bold", family="DIN Condensed"), 
+        legend.position = "bottom" ,
+        legend.text = element_text(size = 20, face="bold", family="DIN Condensed"))+
+  guides(fill = guide_colourbar(title = "Number of Evictions", title.position="top", title.hjust = 0.5))
+
+noncit <- transportation_clean_data %>%
+  ggplot() +
+  geom_sf(aes(fill = noncitizen_perc), color = "#8f98aa") +
+  geom_sf(data = transit_points, size = 1.5) +
+  scale_fill_gradientn(colors = c("#FCF5EE","#ead1dc", "#d5a6bd", "#c27ba0")) +
+  # https://www.color-hex.com/color-palette/1044826
+  theme_minimal() +
+  ggtitle("Immigrant Density \nby Neighborhood")+ 
+  theme(axis.text = element_blank(),
+        panel.grid.major = element_line("transparent"),
+        plot.title = element_text(size = 40, face = "bold", hjust=.5),
+        legend.key.width = unit(.5, "in"),
+        legend.title = element_text(size = 25, face="bold", family="DIN Condensed"), 
+        legend.position = "bottom" ,
+        legend.text = element_text(size = 20, face="bold", family="DIN Condensed"))+
+  guides(fill = guide_colourbar(title = "Percent Non-Citizen", title.position="top", title.hjust = 0.5))
+
+ggarrange(subway_map, rent_map,evict, noncit,
+          ncol=2, nrow=2, padding = unit(3,
+  "line"))
+
+```
+
+Figure 18 was created by combining data from the Census American Community Survey^[https://data.cityofnewyork.us/City-Government/2020-Census-Tracts-to-2020-NTAs-and-CDTAs-Equivale/hm78-6dwm/about_data], Department of Investigation^[https://data.cityofnewyork.us/City-Government/Evictions/6z8x-wfk4], and MTA Subway Stations^[https://data.ny.gov/Transportation/MTA-Subway-Stations/39hk-dx4f/about_data]. Data was combined and summarized to get the final counts shown in Figure 18. By comparing the shaded areas of the various maps in Figure 18, a correlation is exposed between subway count and mean rent. As the number of subway stations increase in a neighborhood, so does the mean rent. 
+
+
+```{r message=FALSE, warning=FALSE, fig.height=8*2, fig.width=8*2, echo=FALSE, fig.cap="Fig 19. Map of subway count by neighborhood along with demographic data. Each map is overlaid with subway transit points."}
+white <- transportation_clean_data %>%
+  ggplot() +
+  geom_sf(aes(fill = white_perc), color = "#8f98aa") +
+  geom_sf(data = transit_points, size = 1.5) +
+  scale_fill_gradientn(colors = c("#FCF5EE","#919BB6", "#5A6687", "#3D465C")) +
+  theme_minimal() +
+  ggtitle("White Population \nby Neighborhood")+ 
+  theme(axis.text = element_blank(),
+        panel.grid.major = element_line("transparent"),
+        plot.title = element_text(size = 40, face = "bold", hjust=.5),
+        legend.key.width = unit(.5, "in"),
+        legend.title = element_text(size = 25, face="bold", family="DIN Condensed"), 
+        legend.position = "bottom" ,
+        legend.text = element_text(size = 20, face="bold", family="DIN Condensed"))+
+    guides(fill = guide_colourbar(title = "Percent White", title.position="top", title.hjust = 0.5))
+
+black <- transportation_clean_data %>%
+  ggplot() +
+  geom_sf(aes(fill = black_perc), color = "#8f98aa") +
+  geom_sf(data = transit_points, size = 1.5) +
+  scale_fill_gradientn(colors = c("#FCF5EE","#F8ABA6", "#F58581", "#DB3F37")) +
+  theme_minimal() +
+  ggtitle("Black Population \nby Neighborhood")+ 
+  theme(axis.text = element_blank(),
+        panel.grid.major = element_line("transparent"),
+        plot.title = element_text(size = 40, face = "bold", hjust=.5),
+        legend.key.width = unit(.5, "in"),
+        legend.title = element_text(size = 25, face="bold", family="DIN Condensed"), 
+        legend.position = "bottom" ,
+        legend.text = element_text(size = 20, face="bold", family="DIN Condensed"))+
+    guides(fill = guide_colourbar(title = "Percent Black", title.position="top", title.hjust = 0.5))
+
+asian <- transportation_clean_data %>%
+  ggplot() +
+  geom_sf(aes(fill = asian_perc), color = "#8f98aa") +
+  geom_sf(data = transit_points, size = 1.5) +
+  scale_fill_gradientn(colors = c("#FCF5EE","#C1C5EC", "#A1A8E2", "#4451C5"),                      
+                       guide = guide_colourbar(title = "Percent Asian")) +
+  theme_minimal() +
+  ggtitle("Asian Population \nby Neighborhood")+ 
+  theme(axis.text = element_blank(),
+        panel.grid.major = element_line("transparent"),
+        plot.title = element_text(size = 40, face = "bold", hjust=.5),
+        legend.key.width = unit(.5, "in"),
+        legend.title = element_text(size = 25, face="bold", family="DIN Condensed"), 
+        legend.position = "bottom" ,
+        legend.text = element_text(size = 20, face="bold", family="DIN Condensed"))+
+    guides(fill = guide_colourbar(title = "Percent Asian", title.position="top", title.hjust = 0.5))
+
+latinx <- transportation_clean_data %>%
+  ggplot() +
+  geom_sf(aes(fill = latinx_perc), color = "#8f98aa")+
+  geom_sf(data = transit_points, size = 1.5) +
+  scale_fill_gradientn(colors = c("#FCF5EE","#F4E2B8", "#E9C572", "#E77E2F")) +
+  theme_minimal() +
+  ggtitle("Latinx Population \nby Neighborhood")+ 
+  theme(axis.text = element_blank(),
+        panel.grid.major = element_line("transparent"),
+        plot.title = element_text(size = 40, face = "bold", hjust=.5),
+        legend.key.width = unit(.5, "in"),
+        legend.title = element_text(size = 25, face="bold", family="DIN Condensed"), 
+        legend.position = "bottom" ,
+        legend.text = element_text(size = 20, face="bold", family="DIN Condensed"))+
+  guides(fill = guide_colourbar(title = "Percent Latinx", title.position="top", title.hjust = 0.5))
+
+ggarrange(subway_map, white, black, latinx, asian, 
+          ncol=3, nrow=2, padding = unit(3,
+  "line"))
+```
+
+By comparing subway station count and the various demographics, Figure 19 shows that the neighborhoods with the highest densities of Black people have the lowest amount of subway stations.
+
+Overall, although the graphs presented in Figure 18 and Figure 19 show some correlation between transportation and gentrification, there are some limitations to the data. These limitation include the fact that different data sets are taken from different years based on available data, and the fact that it just accounts for how many subway stations there are per neighborhood rather than proximity to subway stations. 
+
+
+# Conclusion
+
+In conclusion, the driving factors of gentrification in Brooklyn, New York, intertwine to create a complex urban landscape. Historical redlining practices have entrenched residential segregation, setting the stage for gentrification by maintaining older buildings and keeping land prices low. Simultaneously, the absence of adequate public housing options forces low-income families out of their neighborhoods, while tax incentives prioritize profit-driven development over the creation of affordable housing. The allure of increased property values prompts speculators to invest in the beautification of properties, attracting wealthier buyers and catalyzing demographic shifts. However, amidst these challenges, there is a concerted effort from advocates to push for solutions. Initiatives such as universal rent stabilization, protection of small businesses, and increased transparency in city planning are being championed as means to mitigate the negative impacts of gentrification and foster more equitable urban development^[https://bangentrification.org/political-education-and-resources-2/].
+
+## Future Work
+
+If we had more time with this project we might expand our research to look at all boroughs in New York City and look at a more expanded timeline of data to fully depict the story of gentrification in New York City.
+
+# Appendix
+
+All code to reproduce our findings in this report can be found in data_wrangling_all.Rmd and data_visualizations_all.Rmd. Sources of our data and the wrangling process can be found in data_wrangling_all.Rmd.
+
+
+
+
+
+
