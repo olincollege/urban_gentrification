@@ -327,7 +327,7 @@ ggplot(data=gov_housing[gov_housing$Job_Type=='New Building',], aes(x=PermitYear
         legend.title = element_text(size = 10, face = "bold"))
 ```
 
-Note on the above plots: HPD seems to have changed designation to NYCHA after 2015, but there is none of either in Brooklyn as far as new buildings or alterations since 2015. All the other boroughs have some alteration or new construction for NYCHA past 2015. (HPD and NYCHA are affordable housing initiatives).
+Figure 14 shows the construction of new government housing. HPD (Housing Preservation and Development) and NYCHA (New York City Housing Authority) represent affordable housing projects. Though 2015 saw a great deal of new housing being built in Brooklyn, since then very little to no development has occurred, while other boroughs have seen new developments.
 
 ## Real Estate Speculation
 
@@ -344,8 +344,7 @@ ggplot(data=individ_housing[individ_housing$Job_Type=='New Building',], aes(x=Pe
         legend.title = element_text(size = 10, face = "bold"))
 ```
 
-Interesting trend in Figure 15 is that new buildings that are individually owned have been going down over the years as a % of the total new houses. Compared to other boroughs (Bronx and Queens) this trend is unique to Brooklyn. This points to the fact that in Brooklyn, most new houses are owned by corporations and partnerships, pointing to real estate speculation that can drive out families from their properties. (Alterations and demolitions are also high for individually owned houses but that persists across all boroughs). Also Manhattan has so few new individually owned buildings…
-
+Figure 15 shows that new buildings that are individually owned have been going down over the years as a percentage of the total new houses. Compared to other boroughs (Bronx and Queens) this trend is unique to Brooklyn. This points to the fact that in Brooklyn, most new houses are owned by corporations and partnerships, a symptom of real estate speculation that can drive out families from their properties.
 
 Real estate speculation involves the practice of treating property or housing as a financial investment and not as a purchase of a place to live. While speculation can take the form of buying land well in advance of anticipated development, we will focus on a narrower slice of this world: house flipping. House flippers purchase a house, renovate or retrofit it to update its design, and resell it for profit, hopefully making more than enough money to offset the upgrades. 
 

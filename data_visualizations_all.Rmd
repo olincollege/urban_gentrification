@@ -397,6 +397,7 @@ ggplot(property_value_growth %>% filter(neighborhood == "GREENPOINT" | neighborh
   labs(title = "Property Hold Times", x = "Time Held (days)", y = "Sales Count") +
   theme(plot.title = element_text(size = 14, face = "bold"))
 ```
+
 # Merwan's Data Visualizations
 
 
@@ -417,9 +418,7 @@ ggplot(data=x[order(x$NHWPCTDIFF, decreasing=TRUE)[0:100],], aes(x=Borough)) +
        title="100 Census Tracts with Greatest Difference in % Non-Hispanic White Pop. by Borough") +
   theme(plot.title = element_text(size = 11, face = "bold"))
 ```
-Figure **X.X**: Boroughs in which the census tracts with the largest change in %
-NHW population are located. Change in % NHW population is calculated by taking 
-NHW% in 2016 - NHW% in 2000.
+
 
 ## Why Has Brooklyn Gentrified?
 
@@ -433,9 +432,6 @@ ggplot(data=housing[housing$Borough=='Brooklyn',], aes(x=PermitYear, fill=Job_Ty
   theme(plot.title = element_text(size = 12, face = "bold"),
         legend.title = element_text(size = 10, face = "bold"))
 ```
-Figure **X.X**: Housing jobs by job type in each Borough. Note the spike in
-new projects in Brooklyn soon after 2004, when new zoning policies were
-introduced.
 
 ### Displacement of Public Housing
 
@@ -451,8 +447,6 @@ ggplot(data=gov_housing[gov_housing$Job_Type=='New Building',], aes(x=PermitYear
         legend.title = element_text(size = 10, face = "bold"))
 ```
 
-Figure **X.X**: New construction of government owned housing projects by borough. Affordable housing is HPD (until 2015), NYCHA, and NYCHA/HHC. Note lack of new
-projects after 2015 in Brooklyn compared with other Boroughs.
 
 ### Real Estate Speculation
 ```{r message=FALSE, warning=FALSE}
@@ -466,5 +460,3 @@ ggplot(data=individ_housing[individ_housing$Job_Type=='New Building',], aes(x=Pe
   theme(plot.title = element_text(size = 12, face = "bold"),
         legend.title = element_text(size = 10, face = "bold"))
 ```
-Figure **X.X**: Percent ownership of private for-profit housing in NYC. Note the
-decreasing share of individually owned properties in Brooklyn.
