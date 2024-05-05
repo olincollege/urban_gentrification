@@ -20,6 +20,7 @@ library(ggrepel)
 library(leaflet)
 library(leaflet.extras)
 library(knitr)
+library(tufte)
 
 knitr::opts_chunk$set(tidy = FALSE, message=FALSE, cache.extra = packageVersion('tufte'))
 options(htmltools.dir.version = FALSE)
@@ -182,7 +183,7 @@ ggplot(shapefile) +
                                 "Super Gentrification or Exclusion"))
 ```
 
-Using the typology used in Figure 5, Figure 6 shows a choropleth of the gentrification level of each census tract, where the data was last updated in 2019. Red Hook, Bay Ridge, Fort Hamilton, Mill Basin, Bergen Beach, Canarsie, and part of East New York neighborhoods are mostly in the “Stable Exclusion” phase. Bushwick, Bedford-Stuyvesant, and Crown Heights are classified as “Ongoing Gentrification.” Greenpoint, Cobble Hill, Carroll Gardens, Gowanus, and Park Slope are very gentrified and are classified as “Ongoing Exclusion,” only to be surpassed by Dumbo as “Super Gentrification or Exclusion,” as the most gentrified neighborhood in Brooklyn.
+Using the typology used in Figure 5, Figure 6 shows a choropleth of the gentrification level of each census tract, where the data was last updated in 2019. To create this plot, a Brooklyn geography github package (`nycgeo`) was joined with census tract gentrification data from UC-Berkley and NYU’s Center for Urban Science and Progress. As can be observed, Red Hook, Bay Ridge, Fort Hamilton, Mill Basin, Bergen Beach, Canarsie, and part of East New York neighborhoods are mostly in the “Stable Exclusion” phase. Bushwick, Bedford-Stuyvesant, and Crown Heights are classified as “Ongoing Gentrification.” Greenpoint, Cobble Hill, Carroll Gardens, Gowanus, and Park Slope are very gentrified and are classified as “Ongoing Exclusion,” only to be surpassed by Dumbo as “Super Gentrification or Exclusion,” as the most gentrified neighborhood in Brooklyn.
 
 
 # Why has Brooklyn Gentrified?
@@ -197,7 +198,7 @@ Gentrification can be driven by various factors, many of them being intertwined.
 # Plot barchart showing districts and their hazardous and declining levels
 ggplot(redlining_long, aes(x = boro_cd, y = Percent_value, fill = Category, label= Percent_value_label)) +
   geom_bar(stat = "identity") +
-  geom_text(size = 2.5, position = position_stack(vjust = 0.5)) +
+  geom_text(size = 2.5, position = position_stack(vjust = 0.5), color="white") +
   coord_flip() +
   scale_fill_manual(values = c("#F58581", "#4451C5"), name = "Classification", labels = c("Declining", "Hazardous")) +
   labs(y = "Percent", x="Community District", title="Redlining in Brooklyn") +
@@ -205,7 +206,7 @@ ggplot(redlining_long, aes(x = boro_cd, y = Percent_value, fill = Category, labe
         legend.title = element_text(size = 10, face = "bold"))
 ```
 
-Redlining was a discriminatory practice employed by the federal government and banks in the 1930s, during the Great Depression, aimed at determining loan guarantees based on neighborhood characteristics and residents' race. The Home Owners Loan Corporation (HOLC) created "residential security maps" that classified neighborhoods into categories such as “Best,” “Still Desirable,” “Definitely Declining,” and “Hazardous,” with racialized descriptions like "infiltration of Negroes" used to designate areas as lower value. This practice systematically denied people of color access to mortgage loans, perpetuating racial segregation and depriving them of resources and opportunities available to white residents. Redlining concentrated people of color in underinvested neighborhoods while providing more resources and opportunities to white residents, reinforcing systemic racism and perpetuating economic disparities^[https://a816-dohbesp.nyc.gov/IndicatorPublic/data-stories/redlining/]. Many areas of Brooklyn were redlined, and Figure 7 shows the percentage each community district was classified as “Declining” and “Hazardous.” The areas that were identified to be the most “Hazardous” were Bedford-Stuyvesant, Greenpoint and Williamsburg, Brownsville, Fort Greene and Brooklyn Heights, and Park Slope and Carroll Gardens. Meanwhile Borough Park, Bensonhurst, Sunset Park, Bushwick, Crown Heights and Prospect Heights.
+Redlining was a discriminatory practice employed by the federal government and banks in the 1930s, during the Great Depression, aimed at determining loan guarantees based on neighborhood characteristics and residents' race. The Home Owners Loan Corporation (HOLC) created "residential security maps" that classified neighborhoods into categories such as “Best,” “Still Desirable,” “Definitely Declining,” and “Hazardous,” with racialized descriptions like "infiltration of Negroes" used to designate areas as lower value. This practice systematically denied people of color access to mortgage loans, perpetuating racial segregation and depriving them of resources and opportunities available to white residents. Redlining concentrated people of color in underinvested neighborhoods while providing more resources and opportunities to white residents, reinforcing systemic racism and perpetuating economic disparities^[https://a816-dohbesp.nyc.gov/IndicatorPublic/data-stories/redlining/]. Many areas of Brooklyn were redlined, and Figure 7 shows the percentage each community district was classified as “Declining” and “Hazardous.” This plot was constructed using redlining data from NYC's Environment and Health Data Portal, pivoted from wide to long, and cleaned for better usability.The areas that were identified to be the most “Hazardous” were Bedford-Stuyvesant, Greenpoint and Williamsburg, Brownsville, Fort Greene and Brooklyn Heights, and Park Slope and Carroll Gardens. Meanwhile Borough Park, Bensonhurst, Sunset Park, Bushwick, Crown Heights and Prospect Heights.
 
 ## Tax Incentives
 
@@ -292,7 +293,7 @@ labs(x="Borough", y="Development Count", title="Public Housing Developments Per 
   theme(plot.title = element_text(size = 14, face = "bold"))
 ```
 
-As shown by Figure 12, Brooklyn offers just over 60 public housing developments, despite having the largest population of the five boroughs at 2,600,000+ people^[https://metropolismoving.com/blog/new-york-city-population-in-2022/]. The Bronx has a much lower population of 1.5 million, and Manhattan has 1.7 million people. Brooklyn also has the second largest land area of the boroughs at 71 square miles, following Queens at 109 square miles^[https://www.nymtc.org/portals/0/pdf/CPT-HSP/NYMTC%20coord%20plan%20NYC%20CH03.pdf]. Considering the abundance of people that live in Brooklyn and the large amount of land available, this borough should surpass Manhattan and the Bronx in public housing developments.
+As shown by Figure 12, Brooklyn offers just over 60 public housing developments, despite having the largest population of the five boroughs at 2,600,000+ people^[https://metropolismoving.com/blog/new-york-city-population-in-2022/]. The Bronx has a much lower population of 1.5 million, and Manhattan has 1.7 million people. Brooklyn also has the second largest land area of the boroughs at 71 square miles, following Queens at 109 square miles^[https://www.nymtc.org/portals/0/pdf/CPT-HSP/NYMTC%20coord%20plan%20NYC%20CH03.pdf]. Considering the abundance of people that live in Brooklyn and the large amount of land available, this borough should surpass Manhattan and the Bronx in public housing developments. This plot was made using data from New York City Housing Authority's Public Housing Development database. This data was cleaned and grouped to organize the visualization by borough.
 
 ```{r message=FALSE, warning=FALSE, echo=FALSE, fig.cap="Figure 13: Interactive map showing all public housing developments across all five boroughs^[https://data.cityofnewyork.us/Housing-Development/NYCHA-Public-Housing-Developments/phvi-damg/about_data]"}
 # Convert the public housing dataframe to an sf object
@@ -312,7 +313,7 @@ leaflet() %>%
   addFullscreenControl()
 ```
 
-As shown in Figure 13, Brooklyn severely lacks public housing developments, especially in the bottom half and center of the borough. Some public housing is available in Coney Island, Brownsville, Canarsie, Bedford-Stuyvesant, and Downtown Brooklyn.
+As shown in Figure 13, Brooklyn severely lacks public housing developments, especially in the bottom half and center of the borough. Some public housing is available in Coney Island, Brownsville, Canarsie, Bedford-Stuyvesant, and Downtown Brooklyn. This map was also made using data from New York City Housing Authority's Public Housing Development database in combination with leaflet.
 
 ```{r message=FALSE, warning=FALSE, echo=FALSE, fig.cap="Figure 14: New construction of government owned housing projects by borough. Affordable housing is HPD (until 2015), NYCHA, and NYCHA/HHC. Note lack of new projects after 2015 in Brooklyn compared with other Boroughs."}
 gov_housing = housing[housing$`Ownership Abbrev`=='Government, City',]
