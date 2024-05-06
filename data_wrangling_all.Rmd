@@ -543,7 +543,7 @@ property_value_growth <- property_sales_2013_2023_grouped %>%
   filter(n_distinct(`sale price`) > 1) %>%
   select(block, lot, neighborhood, `sale price`, `sale date`) %>%
   group_by(block, lot)%>%
-  mutate(price_diff = c(NA, diff(`sale price`))) %>%
+  mutate(price_diff = 100 * (`sale price`/lag(`sale price`) - 1)) %>%
   mutate(date_diff = c(NA, diff(as.numeric(`sale date`)))) %>%
   filter(!is.na(price_diff) & price_diff > 0) %>%
   select(block, lot, neighborhood, price_diff, date_diff)

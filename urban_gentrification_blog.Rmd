@@ -348,9 +348,7 @@ Figure 15 shows that new buildings that are individually owned have been going d
 
 Real estate speculation involves the practice of treating property or housing as a financial investment and not as a purchase of a place to live. While speculation can take the form of buying land well in advance of anticipated development, we will focus on a narrower slice of this world: house flipping. House flippers purchase a house, renovate or retrofit it to update its design, and resell it for profit, hopefully making more than enough money to offset the upgrades. 
 
-A common policy practice used by local governments to reduce the influence of flipping on the housing market is an elevated tax on properties sold under a minimum amount of time. A key indicator of flipping, then, would be a large number of properties sold within a shorter range of time. Most likely flipping sales would happen three months to a year after they were first purchased to give time for the renovations to occur.
-
-
+A common policy practice used by local governments to reduce the influence of flipping on the housing market is an elevated tax on properties sold under a minimum amount of time. It would follow from this that a key indicator of flipping, then, could be a large number of properties sold within a shorter range of time. Flipping generally occurs within one year of purchase, but larger projects may extend beyond this range.
 
 ```{r message=FALSE, warning=FALSE, echo=FALSE, fig.cap="Figure 16: Property hold times in the Bedford Stuyvesant neighborhood of Brooklyn for properties that were sold at least twice between January 1, 2013 and December 31, 2023.^[https://www.nyc.gov/site/finance/property/property-rolling-sales-data.page]"}
 ggplot(property_value_growth %>% filter(neighborhood == "GREENPOINT" | neighborhood == "BEDFORD STUYVESANT") %>% mutate(date_diff_days = date_diff / 86400), aes(x=`date_diff_days`))+
@@ -360,21 +358,26 @@ ggplot(property_value_growth %>% filter(neighborhood == "GREENPOINT" | neighborh
   theme(plot.title = element_text(size = 14, face = "bold"))
 ```
 
-When comparing the differences between consecutive property sale dates in Bedford Stuyvesant, the short term holding phenomena becomes clear. Even when ignoring the first two bars, which represent the first three months after the first purchase, the trend is clear that properties are held for a comparatively shorter time than in other places. Greenpoint, however, does not display a similar skew toward lower hold times. 
+When comparing the differences between consecutive property sale dates in Bedford Stuyvesant, the short term holding phenomena becomes clear. The trend is clear that properties in Bed-Stuy have been resold relatively quickly. Greenpoint, however, does not display a similar skew toward lower hold times, despite being marked as a gentrifying region. Flipping, therefore, is not always a symptom or cause of gentrification, and other factors may be at play.
 
-There is significant deviation between gentrification status, prevailing sentiment, and the evidence of house flipping. Measuring price changes as a function of hold time can reveal whether house flippers are getting outsize value for their homes by turning them around so quickly instead of waiting for the market to improve years into the future. A flatter correlation could suggest that flippers are making a similar return on their investment to homeowners who hold onto them longer.
+Another way to evaluate the presence of flipping is to look at value appreciation on a short time scale. This will reveal whether flippers are successfully inflating the value of their properties faster than they would appreciate normally. A flatter correlation could suggest that flippers are making a similar return on their investment to homeowners who hold onto them longer, and a positive correlation would suggest that flippers gain no outsize value above simple appreciation.
 
 ```{r message=FALSE, warning=FALSE, echo=FALSE, fig.cap="Figure 17: Appreciation data by how long the property was held. Vertical axes are log scale to better illustrate distribution. Data was filtered for hold times greater than 60 days. [ibid]"}
 ggplot(property_value_growth %>% filter(neighborhood == "GREENPOINT" | neighborhood == "BEDFORD STUYVESANT") %>% mutate(date_diff_days = date_diff / 86400) %>% filter(date_diff_days > 60), aes(x=`date_diff_days`, price_diff))+
   geom_point(color = "#A1A8E2")+
   geom_smooth(color = "black")+
   facet_wrap(~neighborhood)+
-  labs(title = "Property Appreciation By Hold Time", x = "Time Held (days)", y = "Appreciation ($)")+
+  labs(title = "Property Appreciation By Hold Time", x = "Time Held (days)", y = "Appreciation (%)")+
   scale_y_continuous(trans='log10') +
   theme(plot.title = element_text(size = 13, face = "bold"))
 ```
 
-Neither of the plots in Figure 17 clearly reveals a very strong correlation between the housing price and the time held. This supports the narrative that gentrification is occurring because flippers are experiencing similar appreciation to that of those who have held their houses for much longer. 
+Neither of the plots in Figure 17 clearly reveals a very strong correlation between the housing price and the time held. Notably, both plots represent an elevated initial appreciation, followed by a dip, that then morphs into a more linear growth. This supports the narrative that gentrification is occurring because flippers are experiencing greater appreciation than those who hold their houses for longer.
+
+### Limitations in Speculation Data
+When evaluating property value growth and turnover, multiple data points were required to quantify change. From the property sales between January 2013 and December 2023, only properties that were sold at least twice were considered. This limited the data to a smaller subset of properties, and the data was further filtered to only include properties that were held for at least 60 days. This was done to ensure that the data was not skewed by properties that were bought and sold in quick succession.
+
+Further, the data consists of numerous entries where properties were sold for far below market value. While the reasons behind these sales are unknown, they could be due to foreclosures, short sales, or other factors that would not be indicative of flipping. These entries were not removed from the dataset, as they could still provide valuable information on the housing market in Brooklyn. Sales for $0 were removed from the dataset, as they could be attributed to transfer of ownership into a trust, or simply an error in the dataset.
 
 ## Transportation Infrastructure
 
